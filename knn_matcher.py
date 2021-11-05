@@ -4,7 +4,8 @@
 import numpy as np
 import cv2 as cv
 from matplotlib import pyplot as plt
-from config import reference, target, run_visualizer
+from config import reference, target
+from utils import run_visualizer
 
 MIN_MATCH_COUNT = 10
 

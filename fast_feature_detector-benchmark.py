@@ -1,34 +1,24 @@
 import numpy as np
 import cv2
 import cv2 as cv
-from config import reference, target, run_visualizer, run_split_visualizer
+from config import reference, target
 import matplotlib.pyplot as plt
+import utils
+from utils import run_visualizer, run_split_visualizer
 
-img1 = cv.imread(reference)
-# img1 = cv.imread("filters/test.jpeg")
-img2 = cv.imread(target)
-
-# WHITE = [255,255,255]
-# img1 = cv2.copyMakeBorder(img1.copy(),32,32,32,32,cv2.BORDER_CONSTANT,value=WHITE)
-
-# Too much noise - apply median blur
-# Median blur helps eliminate salt and pepper noise - and also preserves edges
-# img1 = cv.medianBlur(img1, 7)
-# img2 = cv.medianBlur(img2, 7)
+reference_card = cv.imread(reference)
+input_image = cv.imread(target)
 
 # Make image black and white - apply a low threshold
-grayImage = cv2.cvtColor(img1, cv2.COLOR_BGR2GRAY)
-# (thresh, blackAndWhiteImage) = cv2.threshold(grayImage, 127, 255, cv2.THRESH_BINARY)
-(thresh, blackAndWhiteImage) = cv2.threshold(grayImage, 127, 255, cv2.THRESH_BINARY_INV)
-# (thresh, blackAndWhiteImage) = cv2.threshold(grayImage, 192, 255, cv2.THRESH_BINARY_INV)
+grayImage = utils.convert_to_grayscale(reference_card)
+(thresh, blackAndWhiteImage) = cv2.threshold(grayImage, 192, 255, cv2.THRESH_BINARY_INV)
+# (thresh, blackAndWhiteImage) = utils.apply_threshold(grayImage, 127, 255, cv2.THRESH_BINARY_INV)
 
 # contours, hierarchy  = cv2.findContours(blackAndWhiteImage, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
 # blackAndWhiteImage = cv2.drawContours(blackAndWhiteImage, [max(contours, key = cv2.contourArea)], -1, (0,255,75), -1)
 
-# kernel = cv2.getStructuringElement(cv2.MORPH_RECT,(2,2))
-# kernel = cv2.getStructuringElement(cv2.MORPH_RECT,(40,40))
-# blackAndWhiteImage = cv2.morphologyEx(blackAndWhiteImage, cv2.MORPH_OPEN, kernel, iterations=4)
-# blackAndWhiteImage = cv2.morphologyEx(blackAndWhiteImage, cv2.MORPH_CLOSE, kernel, iterations=4)
+# blackAndWhiteImage = utils.apply_opening(blackAndWhiteImage, kernel_size=40, iterations=4)
+# blackAndWhiteImage = utils.apply_closing(blackAndWhiteImage, kernel_size=40, iterations=4)
 
 
 cnts = cv2.findContours(blackAndWhiteImage, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
@@ -57,16 +47,16 @@ for c in cnts:
         points.append((x,y+h))
         points.append((x+w,y+h))
 
-        ROI = img1[y:y+h, x:x+w]
+        ROI = reference_card[y:y+h, x:x+w]
         # cv2.imwrite('ROI_{}.png'.format(image_number), ROI)
-        cv2.rectangle(img1, (x, y), (x + w, y + h), (255,0,0), 2)
+        cv2.rectangle(reference_card, (x, y), (x + w, y + h), (255,0,0), 2)
         image_number += 1
 # 
 
 print(points)
 
 cv2.imshow('b/w', blackAndWhiteImage)
-cv2.imshow('contours', img1)
+cv2.imshow('contours', reference_card)
 # cv2.imshow('close', close)
 # cv2.imshow('mask', mask)
 cv2.waitKey()
@@ -95,12 +85,12 @@ def drawKeyPts(im,keyp,col,th):
 
 
 kp = fast.detect(blackAndWhiteImage,None)
-# img1_with_keypoints = cv.drawKeypoints(blackAndWhiteImage, kp, np.array([]), color=(255,0,255))
-imWithCircles = drawKeyPts(img1.copy(),kp,(0,0,255),2)
+imWithCircles = drawKeyPts(reference_card.copy(),kp,(0,0,255),2)
+# reference_card_with_keypoints = cv.drawKeypoints(blackAndWhiteImage, kp, np.array([]), color=(255,0,255))
 
-# kp = fast.detect(img2,None)
-# img2_with_keypoints = cv.drawKeypoints(img2, kp, np.array([]), color=(255,0,255))
-# im2WithCircles = drawKeyPts(img2.copy(),kp,(0,0,255),10)
+# kp = fast.detect(input_image,None)
+# input_image_with_keypoints = cv.drawKeypoints(input_image, kp, np.array([]), color=(255,0,255))
+# im2WithCircles = drawKeyPts(input_image.copy(),kp,(0,0,255),10)
 
 # # Print all default params
 print("Threshold: ", fast.getThreshold())
@@ -109,4 +99,4 @@ print("neighborhood: ", fast.getType())
 print("Total Keypoints with nonmaxSuppression: ", len(kp))
 # run_split_visualizer(blackAndWhiteImage, imWithCircles, 'Fast Feature detector')
 
-# run_visualizer(img1_with_keypoints, img2_with_keypoints, 'Fast Feature detector')
+# run_visualizer(reference_card_with_keypoints, input_image_with_keypoints, 'Fast Feature detector')

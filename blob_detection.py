@@ -1,13 +1,19 @@
 import numpy as np
+import cv2
 import cv2 as cv
-from config import reference, target, run_visualizer
+import imutils
+
+import matplotlib.pyplot as plt
+from config import reference, target, WIDTH
+import utils
 
 
-ori = cv.imread(reference)
-im = cv.imread(reference)
 
-detector = cv.SimpleBlobDetector_create()
-keypoints = detector.detect(im)
-im_with_keypoints = cv.drawKeypoints(im, keypoints, np.array([]), (0,0,255), cv.DRAW_MATCHES_FLAGS_DRAW_RICH_KEYPOINTS)
+# edges = cv2.Canny(image=im, threshold1=100, threshold2=200)
 
-run_visualizer(ori, im_with_keypoints, 'Blob Detection')
+# detector = cv.SimpleBlobDetector_create()
+# keypoints = detector.detect(im)
+# im_with_keypoints = cv.drawKeypoints(im, keypoints, np.array(
+#     []), (0, 0, 255), cv.DRAW_MATCHES_FLAGS_DRAW_RICH_KEYPOINTS)
+
+# run_split_visualizer(edges, edges, 'Blob Detection')

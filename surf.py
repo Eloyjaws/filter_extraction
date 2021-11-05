@@ -1,6 +1,7 @@
 import numpy as np
 import cv2 as cv
-from config import reference, target, run_visualizer
+from config import reference, target
+from utils import run_visualizer
 
 ori = cv.imread(reference)
 img = cv.imread(reference)
