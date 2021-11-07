@@ -26,4 +26,4 @@ input_low, input_high = calibrate_threshold(
 # utils.run_orb(reference_card, input_image)
 # utils.run_sift(reference_card, input_image)
 # utils.run_sift(ref_threshold, input_threshold)
-utils.extract_fast_features(ref_threshold, input_threshold, reference_card)
+utils.extract_fast_features(ref_threshold, input_threshold, reference_card, input_image, USE_CONTOURS=False)

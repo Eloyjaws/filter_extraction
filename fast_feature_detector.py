@@ -1,10 +1,11 @@
 import numpy as np
 import cv2
 import cv2 as cv
-from config import reference, target, run_visualizer, run_split_visualizer
+from config import reference, target
+from utils import run_split_visualizer
 import matplotlib.pyplot as plt
 
-# img1 = cv.imread("filters/test.jpg")
+img1 = cv.imread("filters/test.jpg")
 img2 = cv.imread(reference)
 # img2 = cv.imread(target)
 
