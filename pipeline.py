@@ -8,7 +8,9 @@ import utils
 from utils import resize, convert_to_grayscale, calibrate_threshold, plot
 
 reference_card = resize(cv.imread(reference))
-input_image = resize(cv.imread(target))
+original_input_image = resize(cv.imread(target))
+input_image = utils.run_sift(
+    reference_card, original_input_image, SHOW_PLOT=False)
 
 reference_card_grayscale = convert_to_grayscale(reference_card)
 input_image_grayscale = convert_to_grayscale(input_image)
@@ -24,6 +26,7 @@ input_low, input_high = calibrate_threshold(
 
 # plot([ref_threshold, input_threshold])
 # utils.run_orb(reference_card, input_image)
-# utils.run_sift(reference_card, input_image)
+# corrected_image = utils.run_sift(reference_card, input_image)
 # utils.run_sift(ref_threshold, input_threshold)
-utils.extract_fast_features(ref_threshold, input_threshold, reference_card, input_image, USE_CONTOURS=False)
+utils.extract_fast_features(
+    ref_threshold, input_threshold, reference_card, input_image, USE_CONTOURS=True)

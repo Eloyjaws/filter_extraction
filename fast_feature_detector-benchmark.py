@@ -8,12 +8,13 @@ from utils import run_visualizer, run_split_visualizer
 
 USE_UI_FOR_CALIBRATION = False
 USE_SIFT = True
-SHOW_PLOT = False
+SHOW_SIFT_PLOT = True
 
 reference_card = utils.resize(cv.imread(reference))
 original_input_image = utils.resize(cv.imread(target))
 input_image = utils.run_sift(
-    reference_card, original_input_image, SHOW_PLOT=SHOW_PLOT) if USE_SIFT else original_input_image
+    reference_card, original_input_image, SHOW_PLOT=SHOW_SIFT_PLOT) if USE_SIFT else original_input_image
+
 
 reference_card_grayscale = utils.convert_to_grayscale(reference_card)
 input_image_grayscale = utils.convert_to_grayscale(input_image)
@@ -29,10 +30,12 @@ input_low, input_high = utils.calibrate_threshold(
     input_image_grayscale, input_low, input_high, cv2.THRESH_BINARY_INV)
 
 # utils.remove_noise_before_keypoint_detecton(input_threshold, use_ui=True)
-
 # utils.extract_all_points(reference_card, ref_threshold)
 utils.extract_all_points(input_image, input_threshold)
 
+
+# utils.plot([input_threshold,
+#            input_image], nrows=1, ncols=2)
 # utils.plot([reference_card, original_input_image,
 #            input_image], nrows=1, ncols=3)
 

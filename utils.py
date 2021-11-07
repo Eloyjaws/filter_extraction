@@ -118,7 +118,7 @@ def calibrate_threshold(image, use_ui=False):
     return low, high
 
 
-def plot(images, nrows=1, ncols=2, figsize=(16, 6)):
+def plot(images, nrows=1, ncols=2, figsize=(16, 6), titles=None):
     fig, ax = plt.subplots(nrows=nrows, ncols=ncols, figsize=figsize)
     axes = [ax] if nrows * ncols == 1 else ax.ravel()
     fig.patch.set_visible(False)
@@ -126,6 +126,9 @@ def plot(images, nrows=1, ncols=2, figsize=(16, 6)):
         axes[i].axis('off')
     for i in range(len(images)):
         axes[i].imshow(cv2.cvtColor(images[i], cv2.COLOR_BGR2RGB))
+    if titles is not None:
+        for i in range(len(titles)):
+            axes[i].title.set_text(titles[i])
     plt.show()
 
 
@@ -230,14 +233,17 @@ def run_sift(img1, img2, SHOW_PLOT=False):
     for m, n in matches:
         if m.distance < 0.7 * n.distance:
             good.append(m)
-
-    MIN_MATCH_COUNT = 10
+    MIN_MATCH_COUNT = 9
+    print(len(good))
+    # MIN_MATCH_COUNT = 10
     if len(good) > MIN_MATCH_COUNT:
         src_pts = np.float32(
             [kp1[m.queryIdx].pt for m in good]).reshape(-1, 1, 2)
         dst_pts = np.float32(
             [kp2[m.trainIdx].pt for m in good]).reshape(-1, 1, 2)
-
+        
+        # print("SRC: \n", src_pts)
+        # print("DST: \n",dst_pts)
         M, mask = cv2.findHomography(dst_pts, src_pts, cv2.RANSAC, 5.0)
     else:
         print("Not enough matches are found - %d/%d" %
@@ -295,10 +301,13 @@ def extract_fast_features(reference, target, reference_card, input_image, USE_CO
                                                      (x + w, y + h), (255, 0, 0), 2)
                 image_number += 1
         image_number = 0
+        target_with_rects = input_image
         for c in target_contours:
             area = cv2.contourArea(c)
             # if area > 500:
             #     print(area)
+            # min_area = 2000
+            # max_area = 5000
             if area > min_area and area < max_area:
                 x, y, w, h = cv2.boundingRect(c)
                 points.append((x, y))
@@ -314,7 +323,8 @@ def extract_fast_features(reference, target, reference_card, input_image, USE_CO
                                                   (x + w, y + h), (255, 0, 0), 2)
                 image_number += 1
 
-        plot([reference_with_rects, target_with_rects])
+        plot([reference_with_rects, target_with_rects],
+             titles=["Reference", "Input"])
     else:
         fast = cv.FastFeatureDetector_create()
         fast.setNonmaxSuppression(False)
@@ -326,7 +336,6 @@ def extract_fast_features(reference, target, reference_card, input_image, USE_CO
 
         kp2 = fast.detect(target, None)
         targetWithCircles = drawKeyPts(input_image.copy(), kp2, (0, 0, 255), 2)
-
         plot([referenceWithCircles, targetWithCircles])
 
 
@@ -387,78 +396,28 @@ def extract_all_points(original, after_threshold):
         after_threshold, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
     contours = contours[0] if len(contours) == 2 else contours[1]
     squares = []
+
+    # cv2.drawContours(image, contours, -1, (0, 255, 0), 3)
+    # plot([after_threshold, image])
+    # return
+
     # https://coderedirect.com/questions/493257/advanced-square-detection-with-connected-region
-    for cnt in contours:
-        print("(=====)")
-        print(cnt)
-        cnt_len = cv2.arcLength(cnt, True)
-        cnt = cv2.approxPolyDP(cnt, 0.02*cnt_len, True)
-        print(cnt_len, cnt)
-        print("(=====)")
-
-        if len(cnt) == 4 and cv2.contourArea(cnt) > 1000 and cv2.isContourConvex(cnt):
-            cnt = cnt.reshape(-1, 2)
+    for contour in contours:
+        contour_len = cv2.arcLength(contour, True)
+        contour_area = cv2.contourArea(contour)
+        contour = cv2.approxPolyDP(contour, 0.02*contour_len, True)
+        if len(contour) == 4 and contour_area > 1000 and contour_area < 30000 and cv2.isContourConvex(contour):
+            contour = contour.reshape(-1, 2)
+            # print([angle_cos(contour[i], contour[(i+1) % 4], contour[(i+2) % 4]) for i in range(4)])
             max_cos = np.max(
-                [angle_cos(cnt[i], cnt[(i+1) % 4], cnt[(i+2) % 4]) for i in range(4)])
-            if max_cos < 0.1:
-                squares.append(cnt)
-                cv2.circle(image, cnt[0], 8, (0, 0, 255), -1)
-                cv2.circle(image, cnt[1], 8, (0, 255, 0), -1)
-                cv2.circle(image, cnt[2], 8, (255, 0, 0), -1)
-                cv2.circle(image, cnt[3], 8, (255, 255, 0), -1)
-        continue
-
-
-    # for c in contours:
-    #     no_of_points = len(c)
-    #     if(no_of_points < 4):
-    #         continue
-    #     elif(no_of_points == 4):
-    #         extLeft, extRight = c.reshape(-1, 2)[:2]
-    #         extTop, extBot = c.reshape(-1, 2)[-2:]
-    #     else:
-    #         extLeft, extRight = c[c.sum(
-    #             axis=2).argmin()][0], c[c.sum(axis=2).argmax()][0]
-    #         extTop, extBot = [0, 0], [0, 0]
-    #         continue
-
-    #         increasing_noise = np.linspace(
-    #             0., .9, num=len(c[:, :, 0]), dtype='float32')
-    #         decreasing_noise = np.linspace(.9, 0., num=len(
-    #             c[:, 0]), dtype='float32')
-
-    #         extLeft = tuple(c[c[:, :, 0].argmin()][0])
-    #         extRight = tuple(c[c[:, :, 0].argmax()][0])
-    #         extTop = tuple(c[c[:, :, 1].argmin()][0])
-    #         extBot = tuple(c[c[:, :, 1].argmax()][0])
-
-            # if i < 1:
-            #     i += 1
-            #     idx = c[:, 1].argmax()
-            #     print(c, idx, c[idx])
-            # print(c, c[:, :, 0], np.argmin(c[:, :, 0] + increasing_noise))
-            # print(len(c), i)
-            # print(extLeft, extRight, extTop, extBot)
-
-            # topLeft = tuple(c[np.argmin(c[:, :, 0] + increasing_noise)][0])
-            # topRight = tuple(c[np.argmin(c[:, :, 0] + decreasing_noise)][0])
-            # bottomLeft = tuple(c[np.argmin(c[:, :, 1] + increasing_noise)][0])
-            # bottomRight = tuple(c[np.argmax(c[:, :, 1] + increasing_noise)][0])
-
-            # if (cv2.norm(extLeft - extRight) > 300):
-            #     continue
-            # cv2.drawContours(image, [c], -1, (0, 255, 255), 2)
-            # cv2.circle(image, extLeft, 8, (0, 0, 255), -1)
-            # cv2.circle(image, extRight, 8, (0, 255, 0), -1)
-            # cv2.circle(image, extTop, 8, (255, 0, 0), -1)
-            # cv2.circle(image, extBot, 8, (255, 255, 0), -1)
+                [angle_cos(contour[i], contour[(i+1) % 4], contour[(i+2) % 4]) for i in range(4)])
+            if max_cos < 0.5:
+                squares.append(contour)
+                print("CONTOUR: \n", contour)
+                cv2.circle(image, contour[0], 8, (0, 0, 255), -1)
+                cv2.circle(image, contour[1], 8, (0, 255, 0), -1)
+                cv2.circle(image, contour[2], 8, (255, 0, 0), -1)
+                cv2.circle(image, contour[3], 8, (255, 0, 255), -1)
 
     cv2.imshow("Contours", image)
     cv2.waitKey(0)
-    # print(extTop, extRight, extBot, extLeft)
-    # new_c = [(extLeft, extTop), (extLeft, extBot),
-    #          (extRight, extBot), (extRight, extTop)]
-    # print(new_c)
-    # i += 1
-    # if i > 5:
-    #     break

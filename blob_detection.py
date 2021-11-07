@@ -16,6 +16,7 @@ image = utils.resize(cv.imread(target))
 corrected_image = utils.run_sift(reference_card, image, SHOW_PLOT=SHOW_PLOT) if USE_SIFT else image
 gray_image = utils.convert_to_grayscale(corrected_image)
 
+# https://dsp.stackexchange.com/questions/22648/in-opecv-function-hough-circles-how-does-parameter-1-and-2-affect-circle-detecti
 circles = cv2.HoughCircles(gray_image, cv2.HOUGH_GRADIENT,
                            1, 100, param1=100, param2=70, minRadius=0, maxRadius=0)
 

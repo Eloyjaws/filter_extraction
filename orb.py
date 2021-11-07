@@ -1,61 +1,77 @@
 import numpy as np
 import cv2 as cv
-from config import reference, target, run_visualizer
+from config import reference, target
+import utils
 
-img = cv.imread(reference)
+img1 = utils.resize(cv.imread(reference))
+img2 = utils.resize(cv.imread(target))
 # img = cv.medianBlur(img, 7)
+# Source: https://docs.opencv.org/3.4.4/d1/de0/tutorial_py_feature_homography.html
+# Slightly edited by methylDragon
 
-cv.namedWindow('ORB', cv.WINDOW_NORMAL)
-
-def f(x):
-    return
+MIN_MATCH_COUNT = 10
 
 # Initiate ORB detector
-cv.createTrackbar('Edge Threshold', 'ORB', 15, 50, f)
-cv.createTrackbar('Patch Size', 'ORB', 31, 30, f)
-cv.createTrackbar('N Levels', 'ORB', 8, 30, f)
-cv.createTrackbar('Fast Threshold', 'ORB', 20, 50, f)
-cv.createTrackbar('Scale Factor', 'ORB', 12, 25, f)
-cv.createTrackbar('WTA K', 'ORB', 2, 4, f)
-cv.createTrackbar('First Level', 'ORB', 0, 20, f)
-cv.createTrackbar('N Features', 'ORB', 500, 1000, f)
+orb = cv.ORB_create(edgeThreshold=15, patchSize=31, nlevels=8, fastThreshold=32,
+                    scaleFactor=1.2, WTA_K=2, scoreType=cv.ORB_HARRIS_SCORE, firstLevel=0, nfeatures=500)
 
-while True:
-    edge_threshold = cv.getTrackbarPos('Edge Threshold', 'ORB')
-    patch_size = cv.getTrackbarPos('Patch Size', 'ORB')
-    n_levels = cv.getTrackbarPos('N Levels', 'ORB')
-    fast_threshold = cv.getTrackbarPos('Fast Threshold', 'ORB')
-    scale_factor = cv.getTrackbarPos('Scale Factor', 'ORB') / 10
-    wta_k = cv.getTrackbarPos('WTA K', 'ORB')
-    first_level = cv.getTrackbarPos('First Level', 'ORB')
-    n_features = cv.getTrackbarPos('N Features', 'ORB')
+# find the keypoints and descriptors with SIFT
+kp1, des1 = orb.detectAndCompute(img1, None)
+kp2, des2 = orb.detectAndCompute(img2, None)
 
-    if wta_k < 2:
-        wta_k = 2
+for k in range(len(kp1)):
+    print(kp1[k].pt)
 
-    if patch_size < 2:
-        patch_size = 2
+for k in range(len(kp2)):
+    print(kp2[k].pt)
 
-    if n_levels < 1:
-        n_levels = 1
+print(len(kp1), len(kp2))
 
-    if scale_factor < 1:
-        scale_factor = 1
 
-    orb = cv.ORB_create(edgeThreshold=edge_threshold, patchSize=patch_size, nlevels=n_levels, fastThreshold=fast_threshold, scaleFactor=scale_factor, WTA_K=wta_k,scoreType=cv.ORB_HARRIS_SCORE, firstLevel=first_level, nfeatures=n_features)
+FLANN_INDEX_LSH = 6
+index_params = dict(algorithm=FLANN_INDEX_LSH,
+                    table_number=6,  # 12
+                    key_size=12,     # 20
+                    multi_probe_level=1)  # 2
 
-    # find the keypoints with ORB
-    kp = orb.detect(img,None)
+# Then set number of searches. Higher is better, but takes longer
+search_params = dict(checks=100)
 
-    # compute the descriptors with ORB
-    kp, des = orb.compute(img, kp)
+flann = cv.FlannBasedMatcher(index_params, search_params)
+matches = flann.knnMatch(des1, des2, k=2)
 
-    # draw only keypoints location,not size and orientation
-    img2 = cv.drawKeypoints(img, kp, None, color=(0,255,0), flags=cv.DRAW_MATCHES_FLAGS_DRAW_RICH_KEYPOINTS)
+# store all the good matches as per Lowe's ratio test.
+good = []
+for m, n in matches:
+    if m.distance < 0.7*n.distance:
+        good.append(m)
 
-    cv.imshow('ORB', img2)
+if len(good) > MIN_MATCH_COUNT:
+    src_pts = np.float32([kp1[m.queryIdx].pt for m in good]).reshape(-1, 1, 2)
+    dst_pts = np.float32([kp2[m.trainIdx].pt for m in good]).reshape(-1, 1, 2)
 
-    if cv.waitKey(10) & 0xFF == 27:
-        break
+    M, mask = cv.findHomography(src_pts, dst_pts, cv.RANSAC, 5.0)
 
-cv.destroyAllWindows()
+    matchesMask = mask.ravel().tolist()
+
+    try:
+        h, w, d = img1.shape
+    except:
+        h, w = img1.shape
+
+    pts = np.float32([[0, 0], [0, h-1], [w-1, h-1], [w-1, 0]]
+                     ).reshape(-1, 1, 2)
+
+    dst = cv.perspectiveTransform(pts, M)
+    img2 = cv.polylines(img2, [np.int32(dst)], True, 255, 3, cv.LINE_AA)
+else:
+    print("Not enough matches are found - {}/{}".format(len(good), MIN_MATCH_COUNT))
+    matchesMask = None
+
+draw_params = dict(matchColor=(0, 255, 0),  # draw matches in green color
+                   singlePointColor=None,
+                   matchesMask=matchesMask,  # draw only inliers
+                   flags=2)
+img3 = cv.drawMatches(img1, kp1, img2, kp2, good, None, **draw_params)
+
+utils.plot([img3], ncols=1)
