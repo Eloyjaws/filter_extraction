@@ -2,7 +2,7 @@ import numpy as np
 import cv2
 import cv2 as cv
 from config import reference, target
-from utils import run_split_visualizer
+from utils import plot
 import matplotlib.pyplot as plt
 
 img1 = cv.imread("filters/test.jpg")
@@ -64,6 +64,6 @@ print("Threshold: ", fast.getThreshold())
 print("nonmaxSuppression: ", fast.getNonmaxSuppression())
 print("neighborhood: ", fast.getType())
 print("Total Keypoints with nonmaxSuppression: ", len(kp))
-run_split_visualizer(blackAndWhiteImage, imWithCircles, 'Fast Feature detector')
+plot([blackAndWhiteImage, imWithCircles])
 
 # run_visualizer(img1_with_keypoints, img2_with_keypoints, 'Fast Feature detector')

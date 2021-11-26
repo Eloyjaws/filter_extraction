@@ -1,7 +1,8 @@
 import cv2 as cv2
 import cv2 as cv
 import numpy as np 
-from config import reference, target, run_split_visualizer, run_visualizer
+from config import reference, target
+from utils import plot
 
 img1 = cv2.imread(reference)
 img2 = cv2.imread(target)
@@ -74,4 +75,4 @@ def harris_corner_detection_v1(img):
 # harris_corner_detection_v1(img1)
 grad1 = harris_corner_detection(img1)
 grad2 = harris_corner_detection(img2)
-run_visualizer(grad1, grad2, "Morphological gradient of Keypoints obtained from Harris Corner Detector")
+plot([grad1, grad2])

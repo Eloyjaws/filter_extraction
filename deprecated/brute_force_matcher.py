@@ -4,7 +4,7 @@ import numpy as np
 import cv2 as cv
 import matplotlib.pyplot as plt
 from config import reference, target
-from utils import run_visualizer
+from utils import plot
 
 
 img1 = cv.imread(reference)

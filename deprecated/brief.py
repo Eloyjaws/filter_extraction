@@ -42,4 +42,4 @@ kp, des = brief.compute(gray2, kp)
 
 res2 = cv.drawKeypoints(gray2,kp,img2,flags=cv.DRAW_MATCHES_FLAGS_DRAW_RICH_KEYPOINTS)
 
-run_visualizer(res1, res2, 'BRIEF')
+plot([res1, res2])

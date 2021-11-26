@@ -2,9 +2,11 @@ import numpy as np
 import cv2
 import cv2 as cv
 import matplotlib.pyplot as plt
+import math
 
 from config import WIDTH, HEIGHT, IMAGE_DIMS
 
+font = cv2.FONT_HERSHEY_SIMPLEX
 
 def convert_to_grayscale(image):
     return cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
@@ -241,15 +243,16 @@ def run_sift(img1, img2, SHOW_PLOT=False):
             [kp1[m.queryIdx].pt for m in good]).reshape(-1, 1, 2)
         dst_pts = np.float32(
             [kp2[m.trainIdx].pt for m in good]).reshape(-1, 1, 2)
-        
+
         # print("SRC: \n", src_pts)
         # print("DST: \n",dst_pts)
         M, mask = cv2.findHomography(dst_pts, src_pts, cv2.RANSAC, 5.0)
+        print(M, "\n", cv2.determinant(M))
     else:
         print("Not enough matches are found - %d/%d" %
               (len(good), MIN_MATCH_COUNT))
 
-    out = cv2.warpPerspective(img2, M, (img1.shape[1], img1.shape[0]))
+    out = cv2.warpPerspective(img2, M, (img1.shape[1], img1.shape[0]), borderMode=cv2.BORDER_CONSTANT, borderValue=(255, 255, 255))
     if SHOW_PLOT:
         plot([img1, img2, out, img3], nrows=2, ncols=2)
     return out
@@ -265,17 +268,27 @@ def drawKeyPts(image, keypoints, col, thickness):
     return image
 
 
+def sort_contours(contours, base=50):
+    return NotImplementedError
+
+
 def extract_fast_features(reference, target, reference_card, input_image, USE_CONTOURS=True):
     if USE_CONTOURS:
+
+        reference_colors = []
+        target_colors = []
+
         reference_contours = cv2.findContours(
             reference, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
         reference_contours = reference_contours[0] if len(
             reference_contours) == 2 else reference_contours[1]
+        print(reference_contours)
 
         target_contours = cv2.findContours(
             target, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
         target_contours = target_contours[0] if len(
             target_contours) == 2 else target_contours[1]
+        print(target_contours)
 
         # https://stackoverflow.com/a/57193144/5837671
         points = []
@@ -296,9 +309,12 @@ def extract_fast_features(reference, target, reference_card, input_image, USE_CO
                 padding = 6
                 ROI = reference_card[y+padding:y +
                                      h-padding, x+padding:x+w-padding]
+                reference_colors.append(np.average(ROI, axis=(0, 1)))
                 cv2.imwrite(f"boxes/Box_{image_number}.png", ROI)
                 reference_with_rects = cv2.rectangle(reference_card, (x, y),
                                                      (x + w, y + h), (255, 0, 0), 2)
+                reference_with_rects = cv2.putText(
+                    reference_with_rects, f"{image_number}", (x, y), font, 0.9, (0, 0, 0), 3)
                 image_number += 1
         image_number = 0
         target_with_rects = input_image
@@ -318,10 +334,17 @@ def extract_fast_features(reference, target, reference_card, input_image, USE_CO
                 padding = 6
                 ROI = input_image[y+padding:y +
                                   h-padding, x+padding:x+w-padding]
+                target_colors.append(np.average(ROI, axis=(0, 1)))
                 cv2.imwrite(f"target_boxes/Box_{image_number}.png", ROI)
                 target_with_rects = cv2.rectangle(input_image, (x, y),
                                                   (x + w, y + h), (255, 0, 0), 2)
+                target_with_rects = cv2.putText(
+                    target_with_rects, f"{image_number}", (x, y), font, 0.9, (0, 0, 0), 3)
                 image_number += 1
+
+        # for i in range(len(reference_colors)):
+        #     print(
+        #         f"Box {i} \t {reference_colors[i].astype(np.int)} \t {target_colors[i].astype(np.int)}")
 
         plot([reference_with_rects, target_with_rects],
              titles=["Reference", "Input"])
@@ -402,6 +425,8 @@ def extract_all_points(original, after_threshold):
     # return
 
     # https://coderedirect.com/questions/493257/advanced-square-detection-with-connected-region
+    img_number = 0
+    base = 40
     for contour in contours:
         contour_len = cv2.arcLength(contour, True)
         contour_area = cv2.contourArea(contour)
@@ -412,12 +437,27 @@ def extract_all_points(original, after_threshold):
             max_cos = np.max(
                 [angle_cos(contour[i], contour[(i+1) % 4], contour[(i+2) % 4]) for i in range(4)])
             if max_cos < 0.5:
+                contour = sorted(contour, key=lambda b: (
+                    base * math.floor(b[0] / base), base * math.floor(b[1] / base)), reverse=False)
                 squares.append(contour)
-                print("CONTOUR: \n", contour)
-                cv2.circle(image, contour[0], 8, (0, 0, 255), -1)
-                cv2.circle(image, contour[1], 8, (0, 255, 0), -1)
-                cv2.circle(image, contour[2], 8, (255, 0, 0), -1)
-                cv2.circle(image, contour[3], 8, (255, 0, 255), -1)
+                # print("CONTOUR: \n", contour)
+                # cv2.putText(
+                #     image, f"{img_number}", contour[0], font, 0.9, (0, 0, 0), 3)
+                # img_number += 1
+                # # cv2.circle(image, contour[0], 8, (0, 0, 255), -1)
+                # # cv2.circle(image, contour[1], 8, (0, 255, 0), -1)
+                # # cv2.circle(image, contour[2], 8, (255, 0, 0), -1)
+                # # cv2.circle(image, contour[3], 8, (255, 0, 255), -1)
+    
+    sorted_contours = sorted(squares, key=lambda b: (
+                    base * math.floor(b[0][0] / base), base * math.floor(b[0][1] / base)), reverse=False)
+    
 
-    cv2.imshow("Contours", image)
-    cv2.waitKey(0)
+    for idx, contour in enumerate(sorted_contours):
+        cv2.putText(image, f"{idx}", contour[0], font, 0.9, (0, 0, 0), 3)
+        cv2.circle(image, contour[0], 8, (0, 0, 255), -1)
+        cv2.circle(image, contour[1], 8, (0, 255, 0), -1)
+        cv2.circle(image, contour[2], 8, (255, 0, 0), -1)
+        cv2.circle(image, contour[3], 8, (255, 0, 255), -1)
+
+    return image, np.array(sorted_contours)
