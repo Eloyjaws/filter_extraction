@@ -5,10 +5,12 @@ from config import reference, target
 import matplotlib.pyplot as plt
 import utils
 from utils import run_visualizer, run_split_visualizer
+import colour
+
 
 USE_UI_FOR_CALIBRATION = False
 USE_SIFT = True
-USE_SIFT = False
+# USE_SIFT = False
 SHOW_SIFT_PLOT = False
 # SHOW_SIFT_PLOT = True
 
@@ -17,6 +19,7 @@ original_input_image = utils.resize(cv.imread(target))
 input_image = utils.run_sift(
     reference_card, original_input_image, SHOW_PLOT=SHOW_SIFT_PLOT) if USE_SIFT else original_input_image
 
+# utils.extract_filter(reference_card)
 
 reference_card_grayscale = utils.convert_to_grayscale(reference_card)
 input_image_grayscale = utils.convert_to_grayscale(input_image)
@@ -32,9 +35,14 @@ input_low, input_high = utils.calibrate_threshold(
     input_image_grayscale, input_low, input_high, cv2.THRESH_BINARY_INV)
 
 # utils.remove_noise_before_keypoint_detecton(input_threshold, use_ui=True)
-im1, c1 = utils.extract_all_points(reference_card, ref_threshold)
-im2, c2 = utils.extract_all_points(input_image, input_threshold)
-# utils.plot([im1, im2])
+im1, c1, ref_colors = utils.extract_all_points(reference_card, ref_threshold)
+im2, c2, trgt_colors = utils.extract_all_points(input_image, input_threshold)
+print("Ref: \n", ref_colors, "\n", "Target: \n", trgt_colors)
+# color_corrector = utils.get_color_calibration_model(ref_colors, trgt_colors)
+utils.plot([im1, im2])
+# corrected = input_image.copy()  
+# corrected[:] = colour.colour_correction(corrected[:], trgt_colors, ref_colors, 'Finlayson 2015')
+# utils.plot([im1, im2, corrected], ncols=3)
 
 
 def flatten(cnt, expand=False):
@@ -47,12 +55,26 @@ objpoints = np.array([flatten(c1, expand=True)])
 imgpoints = np.array([flatten(c2)])
 
 ret, mtx, dist, rvecs, tvecs = cv.calibrateCamera(objpoints, imgpoints, input_image_grayscale.shape[::-1], None, None)
-print(ret, mtx, dist, rvecs, tvecs)
+
+# print(ret, "\n\n", mtx , "\n\n", dist, "\n\n", rvecs, "\n\n", tvecs)
+
+import yaml
+
+camera_parameters = {
+        'ret': ret,
+        'camera_matrix': np.asarray(mtx).tolist(),
+        'dist_coeff': np.asarray(dist).tolist(),
+        'rvecs': np.asarray(rvecs).tolist(),
+        'tvecs': np.asarray(tvecs).tolist()
+        }
+
+with open(r'camera_parameters.yaml', 'w') as file:
+    documents = yaml.dump(camera_parameters, file)
 
 img = cv.imread(target)
 h,  w = img.shape[:2]
 newcameramtx, roi = cv.getOptimalNewCameraMatrix(mtx, dist, (w,h), 1, (w,h))
-print(newcameramtx, roi)
+# print(newcameramtx, roi)
 
 # Option 1: undistort
 dst = cv.undistort(img, mtx, dist, None, newcameramtx)

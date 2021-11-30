@@ -3,8 +3,9 @@ import cv2
 import cv2 as cv
 import matplotlib.pyplot as plt
 import math
+from sklearn.cross_decomposition import PLSRegression
 
-from config import WIDTH, HEIGHT, IMAGE_DIMS
+from config import WIDTH, HEIGHT
 
 font = cv2.FONT_HERSHEY_SIMPLEX
 
@@ -26,7 +27,7 @@ def resize(image):
         image = cv2.transpose(image)
         image = cv2.flip(image, flipCode=0)
 
-    return cv2.resize(image, IMAGE_DIMS, cv2.INTER_AREA)
+    return cv2.resize(image, (WIDTH, HEIGHT), cv2.INTER_AREA)
 
 
 def pad(image, size=32, background=[255, 255, 255]):
@@ -452,12 +453,44 @@ def extract_all_points(original, after_threshold):
     sorted_contours = sorted(squares, key=lambda b: (
                     base * math.floor(b[0][0] / base), base * math.floor(b[0][1] / base)), reverse=False)
     
-
+    colors = []
     for idx, contour in enumerate(sorted_contours):
         cv2.putText(image, f"{idx}", contour[0], font, 0.9, (0, 0, 0), 3)
         cv2.circle(image, contour[0], 8, (0, 0, 255), -1)
         cv2.circle(image, contour[1], 8, (0, 255, 0), -1)
         cv2.circle(image, contour[2], 8, (255, 0, 0), -1)
         cv2.circle(image, contour[3], 8, (255, 0, 255), -1)
+        x, y, w, h = cv2.boundingRect(np.array([contour]))
 
-    return image, np.array(sorted_contours)
+        padding = 6
+        ROI = original[y+padding:y +
+                            h-padding, x+padding:x+w-padding]
+        colors.append(np.average(ROI, axis=(0, 1)))
+
+    return image, np.array(sorted_contours), colors
+
+
+def get_color_calibration_model(reference, input):
+    pls = PLSRegression(n_components=3)
+    pls.fit(input, reference)
+    print("Color calibration model score: ", pls.score(reference, input))
+    return pls
+
+def extract_filter(image):
+    grayscale_image = convert_to_grayscale(image)
+    # https://dsp.stackexchange.com/questions/22648/in-opecv-function-hough-circles-how-does-parameter-1-and-2-affect-circle-detecti
+    circles = cv2.HoughCircles(grayscale_image, cv2.HOUGH_GRADIENT,
+                            1, 100, param1=100, param2=70, minRadius=0, maxRadius=0)
+
+    if circles is None:
+        circles = np.array([[]])
+    circles = np.uint16(np.around(circles))
+    padding = 8
+    for (x, y, r) in circles[0]:
+        cv2.putText(image, f"{x}, {y}, {r}", (x, y),
+                    cv2.FONT_HERSHEY_SIMPLEX, 0.3, (255, 0, 0), 1, cv2.LINE_AA)
+        cv2.circle(image, (x, y), r-padding, (0, 255, 0), 3)
+
+    cv2.imshow("Detected Circle", image)
+    cv2.waitKey(0)
+    cv2.destroyAllWindows()

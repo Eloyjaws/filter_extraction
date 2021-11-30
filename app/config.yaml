@@ -1,0 +1,10 @@
+reference_card: data/RC_RGB_v1.2.3.png
+
+input_images: data/input_images/
+calibration_images: data/calibration_samples
+camera_id: iphone
+logs: data/log.txt
+
+use_ui_for_calibration: False
+use_sift: True
+show_sift_plot: False
