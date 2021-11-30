@@ -1,24 +1,19 @@
-# reference = 'RC_RGB_v1.2.2.png'
-# target = 'distorted_images/1.jpeg'
-# target = 'distorted_images/2.jpeg'
-# target = 'distorted_images/3.jpeg'
-# target = 'distorted_images/4.jpeg'
-
 reference = 'app/data/RC_RGB_v1.2.3.png'
-target = 'app/data/input_images/IMG_0591.jpg'
-# target = 'distorted_images/6.jpeg'
-# target = 'distorted_images/4.jpeg'
-# target = 'distorted_images/5.jpeg'
-# target = 'distorted_images/2.jpeg'
-# target = 'RC_RGB_v1.2.3.png'
-# target = 'distorted_images/5.jpeg'
-# target = 'filters/RCV1.1_P1_6h.jpg'
-
-# reference = 'chess/img1.jpg'
-# target = 'chess/img3.jpg'
-
-# reference = 'chess/left13.jpg'
-# target = 'chess/left12.jpg'
-
+targets = [
+    'app/data/input_images/IMG_0586.jpg',
+    'app/data/input_images/IMG_0587.jpg',
+    'app/data/input_images/IMG_0588.jpg',
+    'app/data/input_images/IMG_0589.jpg',
+    'app/data/input_images/IMG_0590.jpg',
+    'app/data/input_images/IMG_0591.jpg',
+    'app/data/input_images/IMG_0592.jpg',
+    'app/data/input_images/IMG_0593.jpg',
+    'app/data/input_images/IMG_0594.jpg',
+    'app/data/input_images/IMG_0595.jpg',
+    'app/data/input_images/IMG_0596.jpg',
+    'app/data/input_images/IMG_0597.jpg',
+    'app/data/input_images/IMG_0598.jpg',
+]
+target = targets[0]
 
 WIDTH, HEIGHT = 1024, 768  # 4:3 Aspect Ratio - common on mobile devices

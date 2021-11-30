@@ -382,6 +382,20 @@ def load_image_with_features(path_to_image):
     return (image, sorted_contours, colors)
 
 
+def calculate_reprojection_error(objpoints, imgpoints, mtx, dist_coeff, rvecs, tvecs):
+    mean_error = 0
+    for i in range(len(objpoints)):
+        imgpoints2, _ = cv.projectPoints(
+            objpoints[i], rvecs[i], tvecs[i], mtx, dist_coeff)
+        imgpoints2 = np.array([x[0] for x in imgpoints2])
+        error = cv.norm(imgpoints[i].astype(int), imgpoints2.astype(
+            int), cv.NORM_L2)/len(imgpoints2)
+        mean_error += error
+    # print( "total error: {}".format(mean_error/len(objpoints)) )
+    return mean_error/len(objpoints)
+
+
+
 def write_results_to_csv(results):
     Path("results").mkdir(parents=True, exist_ok=True)
     timestamp = datetime.datetime.now().strftime("%a_%d_%b_%Y_%H:%M:%S")

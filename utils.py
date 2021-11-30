@@ -3,11 +3,13 @@ import cv2
 import cv2 as cv
 import matplotlib.pyplot as plt
 import math
+from pathlib import Path
 from sklearn.cross_decomposition import PLSRegression
 
 from config import WIDTH, HEIGHT
 
 font = cv2.FONT_HERSHEY_SIMPLEX
+
 
 def convert_to_grayscale(image):
     return cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
@@ -253,7 +255,8 @@ def run_sift(img1, img2, SHOW_PLOT=False):
         print("Not enough matches are found - %d/%d" %
               (len(good), MIN_MATCH_COUNT))
 
-    out = cv2.warpPerspective(img2, M, (img1.shape[1], img1.shape[0]), borderMode=cv2.BORDER_CONSTANT, borderValue=(255, 255, 255))
+    out = cv2.warpPerspective(
+        img2, M, (img1.shape[1], img1.shape[0]), borderMode=cv2.BORDER_CONSTANT, borderValue=(255, 255, 255))
     if SHOW_PLOT:
         plot([img1, img2, out, img3], nrows=2, ncols=2)
     return out
@@ -311,6 +314,7 @@ def extract_fast_features(reference, target, reference_card, input_image, USE_CO
                 ROI = reference_card[y+padding:y +
                                      h-padding, x+padding:x+w-padding]
                 reference_colors.append(np.average(ROI, axis=(0, 1)))
+                Path("boxes").mkdir(parents=True, exist_ok=True)
                 cv2.imwrite(f"boxes/Box_{image_number}.png", ROI)
                 reference_with_rects = cv2.rectangle(reference_card, (x, y),
                                                      (x + w, y + h), (255, 0, 0), 2)
@@ -336,6 +340,7 @@ def extract_fast_features(reference, target, reference_card, input_image, USE_CO
                 ROI = input_image[y+padding:y +
                                   h-padding, x+padding:x+w-padding]
                 target_colors.append(np.average(ROI, axis=(0, 1)))
+                Path("target_boxes").mkdir(parents=True, exist_ok=True)
                 cv2.imwrite(f"target_boxes/Box_{image_number}.png", ROI)
                 target_with_rects = cv2.rectangle(input_image, (x, y),
                                                   (x + w, y + h), (255, 0, 0), 2)
@@ -449,10 +454,10 @@ def extract_all_points(original, after_threshold):
                 # # cv2.circle(image, contour[1], 8, (0, 255, 0), -1)
                 # # cv2.circle(image, contour[2], 8, (255, 0, 0), -1)
                 # # cv2.circle(image, contour[3], 8, (255, 0, 255), -1)
-    
+
     sorted_contours = sorted(squares, key=lambda b: (
-                    base * math.floor(b[0][0] / base), base * math.floor(b[0][1] / base)), reverse=False)
-    
+        base * math.floor(b[0][0] / base), base * math.floor(b[0][1] / base)), reverse=False)
+
     colors = []
     for idx, contour in enumerate(sorted_contours):
         cv2.putText(image, f"{idx}", contour[0], font, 0.9, (0, 0, 0), 3)
@@ -464,7 +469,7 @@ def extract_all_points(original, after_threshold):
 
         padding = 6
         ROI = original[y+padding:y +
-                            h-padding, x+padding:x+w-padding]
+                       h-padding, x+padding:x+w-padding]
         colors.append(np.average(ROI, axis=(0, 1)))
 
     return image, np.array(sorted_contours), colors
@@ -476,11 +481,13 @@ def get_color_calibration_model(reference, input):
     print("Color calibration model score: ", pls.score(reference, input))
     return pls
 
+
 def extract_filter(image):
+
     grayscale_image = convert_to_grayscale(image)
     # https://dsp.stackexchange.com/questions/22648/in-opecv-function-hough-circles-how-does-parameter-1-and-2-affect-circle-detecti
     circles = cv2.HoughCircles(grayscale_image, cv2.HOUGH_GRADIENT,
-                            1, 100, param1=100, param2=70, minRadius=0, maxRadius=0)
+                               1, 100, param1=100, param2=70, minRadius=0, maxRadius=0)
 
     if circles is None:
         circles = np.array([[]])
@@ -494,3 +501,16 @@ def extract_filter(image):
     cv2.imshow("Detected Circle", image)
     cv2.waitKey(0)
     cv2.destroyAllWindows()
+
+
+def calculate_reprojection_error(objpoints, imgpoints, mtx, dist_coeff, rvecs, tvecs):
+    mean_error = 0
+    for i in range(len(objpoints)):
+        imgpoints2, _ = cv.projectPoints(
+            objpoints[i], rvecs[i], tvecs[i], mtx, dist_coeff)
+        imgpoints2 = np.array([x[0] for x in imgpoints2])
+        error = cv.norm(imgpoints[i].astype(int), imgpoints2.astype(
+            int), cv.NORM_L2)/len(imgpoints2)
+        mean_error += error
+    # print( "total error: {}".format(mean_error/len(objpoints)) )
+    return mean_error/len(objpoints)

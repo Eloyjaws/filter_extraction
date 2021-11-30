@@ -12,7 +12,7 @@ def run_calibration(args):
     print("Running camera calibration")
     path_to_reference = args.get('reference')
     path_to_samples = args.get('path')
-    show_results = False
+    show_results = True
     list_of_images = utils.get_filenames_from_folder(path_to_samples)
 
     (image, sorted_contours, colors) = utils.load_image_with_features(path_to_reference)
@@ -29,20 +29,26 @@ def run_calibration(args):
         imgpoints.append(utils.flatten(sorted_contours))
         no_of_valid_images += 1
 
-    # imgpoints = np.array(imgpoints)
-    # objpoints = np.array([objpoints for i in range(no_of_valid_images)])
-    imgpoints = np.array(imgpoints).reshape((1, -1, 2))
-    objpoints = np.array([objpoints for i in range(
-        no_of_valid_images)]).reshape((1, -1, 3))
+    imgpoints = np.array(imgpoints)
+    objpoints = np.array([objpoints for i in range(no_of_valid_images)])
 
-    # print(objpoints.shape, imgpoints.shape)
-    # print(objpoints[0], imgpoints[0])
+    print("OBJ points", objpoints)
+    print("IMG points", imgpoints)
 
     grayscale_image = utils.convert_to_grayscale(image)
     ret, mtx, dist, rvecs, tvecs = cv2.calibrateCamera(
         objpoints, imgpoints, grayscale_image.shape[::-1], None, None)
 
     print(ret, "\n\n", mtx, "\n\n", dist, "\n\n", rvecs, "\n\n", tvecs)
+
+    reprojection_error = utils.calculate_reprojection_error(objpoints, imgpoints, mtx, dist, rvecs, tvecs)
+    print(f"total error: {reprojection_error}")
+
+    h,  w = image.shape[:2]
+    newcameramtx, roi = cv2.getOptimalNewCameraMatrix(mtx, dist, (w,h), 1, (w,h))
+
+    reprojection_error = utils.calculate_reprojection_error(objpoints, imgpoints, mtx, dist, rvecs, tvecs)
+    print(f"total error after calculating optimal matrix: {reprojection_error}")
 
     camera_parameters = {
         'ret': ret,
