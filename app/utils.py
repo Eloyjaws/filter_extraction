@@ -280,35 +280,29 @@ def extract_all_points(original, after_threshold):
 
     # cv2.drawContours(image, contours, -1, (0, 255, 0), 3)
     # plot([after_threshold, image])
-    # return
 
     # https://coderedirect.com/questions/493257/advanced-square-detection-with-connected-region
     img_number = 0
-    base = 40
+    base = 80
+    xbase = 80
+    ybase = 80
+    
     for contour in contours:
         contour_len = cv2.arcLength(contour, True)
         contour_area = cv2.contourArea(contour)
         contour = cv2.approxPolyDP(contour, 0.02*contour_len, True)
         if len(contour) == 4 and contour_area > 1000 and contour_area < 30000 and cv2.isContourConvex(contour):
             contour = contour.reshape(-1, 2)
-            # print([angle_cos(contour[i], contour[(i+1) % 4], contour[(i+2) % 4]) for i in range(4)])
             max_cos = np.max(
                 [angle_cos(contour[i], contour[(i+1) % 4], contour[(i+2) % 4]) for i in range(4)])
             if max_cos < 0.5:
                 contour = sorted(contour, key=lambda b: (
-                    base * math.floor(b[0] / base), base * math.floor(b[1] / base)), reverse=False)
+                    xbase * math.floor(b[0] / xbase), ybase * math.floor(b[1] / ybase)), reverse=False)
                 squares.append(contour)
-                # print("CONTOUR: \n", contour)
-                # cv2.putText(
-                #     image, f"{img_number}", contour[0], font, 0.9, (0, 0, 0), 3)
-                # img_number += 1
-                # # cv2.circle(image, contour[0], 8, (0, 0, 255), -1)
-                # # cv2.circle(image, contour[1], 8, (0, 255, 0), -1)
-                # # cv2.circle(image, contour[2], 8, (255, 0, 0), -1)
-                # # cv2.circle(image, contour[3], 8, (255, 0, 255), -1)
 
     sorted_contours = sorted(squares, key=lambda b: (
-        base * math.floor(b[0][0] / base), base * math.floor(b[0][1] / base)), reverse=False)
+        xbase * math.floor(b[0][0] / xbase), ybase * math.floor(b[0][1] / ybase)), reverse=False)
+
 
     colors = []
     for idx, contour in enumerate(sorted_contours):
@@ -323,7 +317,6 @@ def extract_all_points(original, after_threshold):
         ROI = original[y+padding:y +
                        h-padding, x+padding:x+w-padding]
         colors.append(np.average(ROI, axis=(0, 1)))
-
     return image, np.array(sorted_contours), colors
 
 

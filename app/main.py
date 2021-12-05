@@ -20,6 +20,7 @@ if __name__ == "__main__":
         print("Failed to load config file with defaults... \n\n")
 
     # https://docs.python.org/3/library/argparse.html
+    # https://realpython.com/command-line-interfaces-python-argparse/
     parser = argparse.ArgumentParser(
         description="{} - Version {}".format(PROGRAM_NAME, PROGRAM_VERSION))
     subparsers = parser.add_subparsers(
@@ -34,6 +35,8 @@ if __name__ == "__main__":
                                     default=defaults.get('calibration_images', None), required=force_required)
     calibration_parser.add_argument("-r", "--reference", help="Path to the image of the reference card",
                                     default=defaults.get('reference_card', None), required=force_required)
+    calibration_parser.add_argument("-ui", "--use_ui_for_calibration", help="Show Results from Calibration",
+                                    default=defaults.get('use_ui_for_calibration', False), required=force_required)
 
     extraction_parser.add_argument("-r", "--reference", help="Path to the image of the reference card",
                                    default=defaults.get('reference_card', None), required=force_required)

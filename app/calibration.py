@@ -4,15 +4,23 @@ import sys
 import yaml
 import numpy as np
 import cv2
+from pprint import pprint
 
 import utils
+
+# http://www.ipb.uni-bonn.de/html/teaching/photo12-2021/2021-pho1-22-Zhang-calibration.pptx.pdf
+# https://docs.opencv.org/3.4.15/d9/d0c/group__calib3d.html
+# https://stackoverflow.com/questions/43563988/camera-calibration-without-chess-boards-corners
+# http://www.vision.caltech.edu/bouguetj/calib_doc/
+# https://opencv.org/evaluating-opencvs-new-ransacs/
 
 
 def run_calibration(args):
     print("Running camera calibration")
     path_to_reference = args.get('reference')
     path_to_samples = args.get('path')
-    show_results = True
+    show_results = args.get('use_ui_for_calibration')
+    
     list_of_images = utils.get_filenames_from_folder(path_to_samples)
 
     (image, sorted_contours, colors) = utils.load_image_with_features(path_to_reference)
@@ -32,22 +40,29 @@ def run_calibration(args):
     imgpoints = np.array(imgpoints)
     objpoints = np.array([objpoints for i in range(no_of_valid_images)])
 
-    print("OBJ points", objpoints)
-    print("IMG points", imgpoints)
-
     grayscale_image = utils.convert_to_grayscale(image)
+
+    k = (objpoints - np.min(objpoints))/(np.max(objpoints) - np.min(objpoints))
+    l = (imgpoints - np.min(imgpoints))/(np.max(imgpoints) - np.min(imgpoints))
+    # print(k[0], objpoints[0])
+
     ret, mtx, dist, rvecs, tvecs = cv2.calibrateCamera(
-        objpoints, imgpoints, grayscale_image.shape[::-1], None, None)
+        k, l, grayscale_image.shape[::-1], None, None)
+    # ret, mtx, dist, rvecs, tvecs = cv2.calibrateCamera(
+    #     objpoints, imgpoints, grayscale_image.shape[::-1], None, None)
 
-    print(ret, "\n\n", mtx, "\n\n", dist, "\n\n", rvecs, "\n\n", tvecs)
+    # print(ret, "\n\n", mtx, "\n\n", dist, "\n\n", rvecs, "\n\n", tvecs)
+    print("camera parameters saved, RMS error: ", ret)
 
-    reprojection_error = utils.calculate_reprojection_error(objpoints, imgpoints, mtx, dist, rvecs, tvecs)
+    # reprojection_error = utils.calculate_reprojection_error(objpoints, imgpoints, mtx, dist, rvecs, tvecs)
+    reprojection_error = utils.calculate_reprojection_error(k, l, mtx, dist, rvecs, tvecs)
     print(f"total error: {reprojection_error}")
 
     h,  w = image.shape[:2]
     newcameramtx, roi = cv2.getOptimalNewCameraMatrix(mtx, dist, (w,h), 1, (w,h))
 
-    reprojection_error = utils.calculate_reprojection_error(objpoints, imgpoints, mtx, dist, rvecs, tvecs)
+    reprojection_error = utils.calculate_reprojection_error(k, l, mtx, dist, rvecs, tvecs)
+    # reprojection_error = utils.calculate_reprojection_error(objpoints, imgpoints, mtx, dist, rvecs, tvecs)
     print(f"total error after calculating optimal matrix: {reprojection_error}")
 
     camera_parameters = {
@@ -100,6 +115,13 @@ def load_camera_parameters(camera_id):
 
 if __name__ == "__main__":
     camera_id = ""
-    print(f"Running Calibration Routine - Camera ID: {camera_id}")
+    print(f"\n\nLoading default camera calibration parameters - Camera ID: {camera_id}\n\n")
     ret, camera_matrix, dist_coeff, rvecs, tvecs = load_camera_parameters(camera_id)
-    print(ret, camera_matrix, dist_coeff, rvecs, tvecs)
+    camera_parameters = {
+        'ret': ret,
+        'camera_matrix': camera_matrix,
+        'dist_coeff': dist_coeff,
+        'rvecs': rvecs,
+        'tvecs': tvecs
+    }
+    pprint(camera_parameters)
