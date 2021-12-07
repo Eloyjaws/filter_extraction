@@ -19,6 +19,7 @@ def run_calibration(args):
     print("Running camera calibration")
     path_to_reference = args.get('reference')
     path_to_samples = args.get('path')
+    camera_id = args.get('camera_id')
     show_results = args.get('use_ui_for_calibration')
     
     list_of_images = utils.get_filenames_from_folder(path_to_samples)
@@ -72,7 +73,7 @@ def run_calibration(args):
         'rvecs': np.asarray(rvecs).tolist(),
         'tvecs': np.asarray(tvecs).tolist()
     }
-    save_camera_parameters(camera_parameters)
+    save_camera_parameters(camera_parameters, camera_id)
 
     if not show_results:
         return
@@ -114,8 +115,14 @@ def load_camera_parameters(camera_id):
 
 
 if __name__ == "__main__":
-    camera_id = ""
-    print(f"\n\nLoading default camera calibration parameters - Camera ID: {camera_id}\n\n")
+    import argparse
+    parser = argparse.ArgumentParser()
+    parser.add_argument("-c", "--camera_id", help="Camera ID - to identify saved camera parameters",
+                                default="default")
+    args = vars(parser.parse_args())
+    camera_id = args.get('camera_id')
+
+    print(f"\n\nLoading camera calibration parameters - Camera ID: {camera_id}\n\n")
     ret, camera_matrix, dist_coeff, rvecs, tvecs = load_camera_parameters(camera_id)
     camera_parameters = {
         'ret': ret,

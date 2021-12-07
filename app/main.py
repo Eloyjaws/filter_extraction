@@ -31,6 +31,8 @@ if __name__ == "__main__":
     extraction_parser = subparsers.add_parser(
         'extract', help='Run filter extraction routine')
 
+    calibration_parser.add_argument("-c", "--camera_id", help="Camera ID - to identify saved camera parameters",
+                                    default="default")
     calibration_parser.add_argument("-p", "--path", help="Path to input images for camera calibration",
                                     default=defaults.get('calibration_images', None), required=force_required)
     calibration_parser.add_argument("-r", "--reference", help="Path to the image of the reference card",
