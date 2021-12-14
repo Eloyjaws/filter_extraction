@@ -23,7 +23,7 @@ ref_low, ref_high = utils.calibrate_threshold(
     reference_card_grayscale, ref_low, ref_high, cv2.THRESH_BINARY_INV)
 im1, c1, ref_colors = utils.extract_all_points(reference_card, ref_threshold)
 
-for target in targets[1::3]:
+for target in targets[:]:
     print(target)
     original_input_image = utils.resize(cv.imread(target))
     input_image = utils.run_sift(
@@ -41,12 +41,11 @@ for target in targets[1::3]:
     # print("Ref: \n", ref_colors, "\n", "Target: \n", trgt_colors)
 
     color_corrector = utils.get_color_calibration_model(ref_colors, trgt_colors)
-    color_corrector = utils.get_color_calibration_model(ref_colors, ref_colors)
     corrected = input_image.copy()  
-    corrected = reference_card.copy()  
-    for i in range(len(corrected)):
-        # corrected[i] = colour.colour_correction(corrected[i], trgt_colors, ref_colors, 'Finlayson 2015')
-        # corrected[i] = colour.colour_correction(corrected[i], trgt_colors, ref_colors, 'Vandermonde')
-        corrected[i] = color_corrector.predict(corrected[i])
-    utils.plot([im1, corrected, im2], ncols=3)
+    for row in corrected:
+        # row[:] = colour.colour_correction(row[:], trgt_colors, ref_colors, 'Cheung 2004')
+        # row[:] = colour.colour_correction(row[:], trgt_colors, ref_colors, 'Finlayson 2015')
+        row[:] = colour.colour_correction(row[:], trgt_colors, ref_colors, 'Vandermonde')
+        # row[:] = color_corrector.predict(row[:])
+    utils.plot([im1, im2, corrected], ncols=3)
     # print(corrected[:].shape)

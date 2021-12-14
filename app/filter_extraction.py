@@ -2,8 +2,12 @@ import os
 import utils
 import colour
 import numpy as np
-import cv2, cv2 as cv
+import pandas as pd
+import cv2
+import cv2 as cv
 import matplotlib.pyplot as plt
+import colour
+
 
 def run_filter_extraction(args):
     print("\n\nRunning filter extraction\n\n")
@@ -11,28 +15,56 @@ def run_filter_extraction(args):
     path_to_reference = args.get('reference')
     path_to_inputs = args.get('inputs')
     camera_id = args.get('camera')
-    
+
     use_sift = args.get('use_sift')
     show_sift_plot = args.get('show_sift_plot')
     show_results = args.get('use_ui_for_calibration')
-    
+
     list_of_images = utils.get_filenames_from_folder(path_to_inputs)
 
-    (image, sorted_contours, ref_colors) = utils.load_image_with_features(path_to_reference)
-    assert(len(sorted_contours) == 30)
+    (reference_image, reference_contours,
+     ref_colors) = utils.load_image_with_features(path_to_reference)
+    assert(len(reference_contours) == 30)
     assert(len(ref_colors) == 30)
-    
+
+    columns=['filename', 'R', 'G', 'B', 'BC_TOT']
     results = []
     for image_path in list_of_images:
-        (image, sorted_contours, target_colors) = utils.load_image_with_features(image_path)
-        if(sorted_contours.shape[0] != 30):
-            continue
-        print(ref_colors[0], target_colors[0])
-    
-    # print(target_colors, ref_colors)
+        original_input_image = utils.resize(cv.imread(image_path))
+        input_image = utils.run_sift(
+            reference_image, original_input_image, SHOW_PLOT=show_sift_plot) if use_sift else original_input_image
+        input_image_grayscale = utils.convert_to_grayscale(input_image)
 
+        input_low, input_high = utils.calibrate_threshold(
+            input_image_grayscale, use_ui=show_results)
+
+        (input_thresh, input_threshold) = cv2.threshold(
+            input_image_grayscale, input_low, input_high, cv2.THRESH_BINARY_INV)
+
+        (target_image, target_contours,
+         target_colors) = utils.extract_all_points(
+            input_image, input_threshold)
+
+        color_corrected_image = input_image.copy()  
+        for row in color_corrected_image:
+            row[:] = colour.colour_correction(row[:], target_colors, ref_colors, 'Vandermonde')
+        utils.plot([reference_image, target_image, color_corrected_image], ncols=3)
+
+        # Extract filter
+        file_name = image_path.split("/")[-1]
+        # filter_value = utils.extract_filter(color_corrected_image)
+        filter_value = utils.extract_filter(input_image)
+        if(filter_value == -1):
+            print(f"Could not extract filter for {file_name}")
+            continue
+        bgr_strings = [str(intensity) for intensity in filter_value]
+        entry = [file_name, bgr_strings[2], bgr_strings[1], bgr_strings[0], 'to_be_calculated']
+        results.append(entry)
     # consider dataframe.append() and dataframe.to_csv()
     # Write results to csv
+    dataframe = pd.DataFrame(results, columns=columns)
+    dataframe.to_csv("results.csv", index=False)
+
 
 if __name__ == "__main__":
     print(f"\n\nRun main.py\n\n")

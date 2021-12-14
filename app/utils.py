@@ -137,7 +137,7 @@ def run_sift(img1, img2, SHOW_PLOT=False):
         if m.distance < 0.7 * n.distance:
             good.append(m)
     MIN_MATCH_COUNT = 9
-    print(len(good))
+    # print(len(good))
     # MIN_MATCH_COUNT = 10
     if len(good) > MIN_MATCH_COUNT:
         src_pts = np.float32(
@@ -148,7 +148,7 @@ def run_sift(img1, img2, SHOW_PLOT=False):
         # print("SRC: \n", src_pts)
         # print("DST: \n",dst_pts)
         M, mask = cv2.findHomography(dst_pts, src_pts, cv2.RANSAC, 5.0)
-        print(M, "\n", cv2.determinant(M))
+        # print(M, "\n", cv2.determinant(M))
     else:
         print("Not enough matches are found - %d/%d" %
               (len(good), MIN_MATCH_COUNT))
@@ -326,27 +326,6 @@ def get_color_calibration_model(reference, input):
     print("Color calibration model score: ", pls.score(reference, input))
     return pls
 
-
-def extract_filter(image):
-    grayscale_image = convert_to_grayscale(image)
-    # https://dsp.stackexchange.com/questions/22648/in-opecv-function-hough-circles-how-does-parameter-1-and-2-affect-circle-detecti
-    circles = cv2.HoughCircles(grayscale_image, cv2.HOUGH_GRADIENT,
-                               1, 100, param1=100, param2=70, minRadius=0, maxRadius=0)
-
-    if circles is None:
-        circles = np.array([[]])
-    circles = np.uint16(np.around(circles))
-    padding = 8
-    for (x, y, r) in circles[0]:
-        cv2.putText(corrected_image, f"{x}, {y}, {r}", (x, y),
-                    cv2.FONT_HERSHEY_SIMPLEX, 0.3, (255, 0, 0), 1, cv2.LINE_AA)
-        cv2.circle(corrected_image, (x, y), r-padding, (0, 255, 0), 3)
-
-    cv2.imshow("Detected Circle", corrected_image)
-    cv2.waitKey(0)
-    cv2.destroyAllWindows()
-
-
 def get_filenames_from_folder(path_to_images):
     files = []
     image_extensions = ["jpg", "png", "jpeg"]
@@ -363,7 +342,7 @@ def flatten(cnt, expand=False):
     return np.array(cnt).astype(np.float32)
 
 
-def load_image_with_features(path_to_image):
+def load_image_with_features(path_to_image, show_results=False):
     card = resize(cv.imread(path_to_image))
     card_grayscale = convert_to_grayscale(card)
 
@@ -399,3 +378,56 @@ def write_results_to_csv(results):
         writer = csv.DictWriter(f, fieldnames=fieldnames)
         writer.writeheader()
         writer.writerows(results)
+
+
+def extract_filter(corrected_image):
+    grayscale_image = convert_to_grayscale(corrected_image)
+    # dp: This parameter is the inverse ratio of the accumulator resolution 
+    # to the image resolution (see Yuen et al. for more details). 
+    # Essentially, the larger the dp gets, the smaller the accumulator array gets.
+    dp = 1
+    # minDist: Minimum distance between the center (x, y) coordinates of detected circles. 
+    # If the minDist is too small, multiple circles in the same neighborhood as the 
+    # original may be (falsely) detected. 
+    # If the minDist is too large, then some circles may not be detected at all.
+    minDist = 100
+    # param1: Gradient value used to handle edge detection in the Yuen et al. method.
+    param1 = 100
+    # param2: Accumulator threshold value for the cv2.HOUGH_GRADIENT method. 
+    # The smaller the threshold is, the more circles will be detected (including false circles). 
+    # The larger the threshold is, the more circles will potentially be returned.
+    param2 = 75
+    # minRadius: Minimum size of the radius (in pixels).
+    minRadius = 0
+    # maxRadius: Maximum size of the radius (in pixels).
+    maxRadius = 0
+
+    circles = cv2.HoughCircles(grayscale_image, cv2.HOUGH_GRADIENT,
+                            dp, minDist, param1=param1, param2=param2, minRadius=minRadius, maxRadius=maxRadius)
+
+    if circles is None:
+        circles = np.array([[]])
+    circles = np.uint16(np.around(circles))
+    # padding = 22 # Centered filter
+    padding = 30 # filter can be placed anywhere in circle
+    circles_detected = len(circles[0])
+    if(circles_detected > 1):
+        print("Error: More than one circle detected")
+        # for (x, y, r) in circles[0]:
+        #     cv2.circle(corrected_image, (x, y), r-padding, (0, 0, 255), 3)
+        # cv2.imshow("Detected Circles", corrected_image)
+        # cv2.waitKey(0)
+        return -1
+
+    if(circles_detected == 0):
+        print("Error: No filter detected")
+        return -1
+    
+    for (x, y, r) in circles[0]:
+        # cv2.circle(corrected_image, (x, y), r-padding, (0, 0, 255), 3)
+        mask = np.zeros((corrected_image.shape[:2]), np.uint8)
+        cv2.circle(mask,(x,y),r-padding,(255,0,0), -1)
+        bgr = cv2.mean(corrected_image, mask=mask)
+        return(bgr[:3])
+    
+    cv2.imshow("Detected Circle", corrected_image)
