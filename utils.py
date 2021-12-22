@@ -134,6 +134,7 @@ def plot(images, nrows=1, ncols=2, figsize=(16, 6), titles=None):
     if titles is not None:
         for i in range(len(titles)):
             axes[i].title.set_text(titles[i])
+    fig.tight_layout(pad=0.)
     plt.show()
 
 
@@ -250,7 +251,7 @@ def run_sift(img1, img2, SHOW_PLOT=False):
         # print("SRC: \n", src_pts)
         # print("DST: \n",dst_pts)
         M, mask = cv2.findHomography(dst_pts, src_pts, cv2.RANSAC, 5.0)
-        print("Determinant of H: ", cv2.determinant(M))
+        # print("Determinant of H: ", cv2.determinant(M))
     else:
         print("Not enough matches are found - %d/%d" %
               (len(good), MIN_MATCH_COUNT))

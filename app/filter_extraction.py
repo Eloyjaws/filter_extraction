@@ -12,6 +12,8 @@ import colour
 def run_filter_extraction(args):
     print("\n\nRunning filter extraction\n\n")
 
+    use_color_correction = True
+
     path_to_reference = args.get('reference')
     path_to_inputs = args.get('inputs')
     camera_id = args.get('camera')
@@ -48,19 +50,16 @@ def run_filter_extraction(args):
         color_corrected_image = input_image.copy()  
         for row in color_corrected_image:
             row[:] = colour.colour_correction(row[:], target_colors, ref_colors, 'Vandermonde')
-        utils.plot([reference_image, target_image, color_corrected_image], ncols=3)
 
         # Extract filter
         file_name = image_path.split("/")[-1]
-        # filter_value = utils.extract_filter(color_corrected_image)
-        filter_value = utils.extract_filter(input_image)
+        filter_value = utils.extract_filter(color_corrected_image, input_image)
         if(filter_value == -1):
             print(f"Could not extract filter for {file_name}")
             continue
         bgr_strings = [str(intensity) for intensity in filter_value]
         entry = [file_name, bgr_strings[2], bgr_strings[1], bgr_strings[0], 'to_be_calculated']
         results.append(entry)
-    # consider dataframe.append() and dataframe.to_csv()
     # Write results to csv
     dataframe = pd.DataFrame(results, columns=columns)
     dataframe.to_csv("results.csv", index=False)

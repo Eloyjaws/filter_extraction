@@ -380,8 +380,8 @@ def write_results_to_csv(results):
         writer.writerows(results)
 
 
-def extract_filter(corrected_image):
-    grayscale_image = convert_to_grayscale(corrected_image)
+def extract_filter(corrected_image, original_image=[]):
+    grayscale_image = convert_to_grayscale(original_image if len(original_image) else corrected_image)
     # dp: This parameter is the inverse ratio of the accumulator resolution 
     # to the image resolution (see Yuen et al. for more details). 
     # Essentially, the larger the dp gets, the smaller the accumulator array gets.

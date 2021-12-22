@@ -14,3 +14,8 @@ and
 ## Calibration
 
 ### Options
+
+
+# Analysis
+https://scikit-learn.org/stable/modules/cross_validation.html
+https://scikit-learn.org/stable/tutorial/machine_learning_map/index.html

@@ -8,6 +8,15 @@ targets_with_ring_light = [
     'app/data/input_images/v2/RCV1.2.4_P1_60h_d.jpg',
     'app/data/input_images/v2/RCV1.2.4_P1_72h_d.jpg',
 ]
+targets_with_ring_light_v2 = [
+    'app/data/input_images/v3/RCV1.2.4_P1_6h_r.jpg',
+    'app/data/input_images/v3/RCV1.2.4_P1_12h_r.jpg',
+    'app/data/input_images/v3/RCV1.2.4_P1_24h_r.jpg',
+    'app/data/input_images/v3/RCV1.2.4_P1_36h_r.jpg',
+    'app/data/input_images/v3/RCV1.2.4_P1_48h_r.jpg',
+    'app/data/input_images/v3/RCV1.2.4_P1_60h_r.jpg',
+    'app/data/input_images/v3/RCV1.2.4_P1_72h_r.jpg',
+]
 targets = [
     'app/data/input_images/v1/RCV1.2.4_P1_6h_B.jpg',
     'app/data/input_images/v1/RCV1.2.4_P1_6h_C.jpg',
