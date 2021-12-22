@@ -8,4 +8,4 @@ logs: data/log.txt
 use_sift: True
 use_ui_for_calibration: False
 show_sift_plot: False
-show_color_correction_plot: True
+show_color_correction_plot: False

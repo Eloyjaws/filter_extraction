@@ -32,6 +32,7 @@ def run_filter_extraction(args):
 
     columns = ['filename', 'R', 'G', 'B', 'BC_TOT']
     results = []
+    box_colors = []
     for image_path in list_of_images:
         original_input_image = utils.resize(cv.imread(image_path))
         input_image = utils.run_sift(
@@ -47,6 +48,8 @@ def run_filter_extraction(args):
         (target_image, target_contours,
          target_colors) = utils.extract_all_points(
             input_image, input_threshold)
+
+        box_colors.append(target_colors)
 
         color_corrected_image = input_image.copy()
         for row in color_corrected_image:
@@ -70,6 +73,8 @@ def run_filter_extraction(args):
     dataframe = pd.DataFrame(results, columns=columns)
     dataframe.to_csv("results.csv", index=False)
 
+    dataframe_boxes = pd.DataFrame(box_colors, columns=np.arange(30))
+    dataframe_boxes.to_csv("boxes.csv", index=False)
 
 if __name__ == "__main__":
     print(f"\n\nRun main.py\n\n")
