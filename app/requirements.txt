@@ -1,0 +1,7 @@
+pandas==1.1.5
+numpy==1.19.5
+colour==0.1.5
+matplotlib==3.3.3
+opencv_python==4.5.2.52
+PyYAML==6.0
+scikit_learn==1.0.1

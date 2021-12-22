@@ -53,6 +53,8 @@ if __name__ == "__main__":
                                    default=defaults.get('use_sift', True), required=force_required)
     extraction_parser.add_argument("-show_sift_plot", "--show_sift_plot", help="Show results from applying SIFT",
                                    default=defaults.get('show_sift_plot', False), required=force_required)
+    extraction_parser.add_argument("-color", "--show_color_correction_plot", help="Show results from applying Color Calibration",
+                                   default=defaults.get('show_color_correction_plot', True), required=force_required)
 
     args = vars(parser.parse_args())
     if args['mode'] == 'calibrate':

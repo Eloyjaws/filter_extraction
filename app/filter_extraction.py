@@ -20,7 +20,8 @@ def run_filter_extraction(args):
 
     use_sift = args.get('use_sift')
     show_sift_plot = args.get('show_sift_plot')
-    show_results = args.get('use_ui_for_calibration')
+    show_ui_results = args.get('use_ui_for_calibration')
+    show_color_plot = args.get('show_color_correction_plot')
 
     list_of_images = utils.get_filenames_from_folder(path_to_inputs)
 
@@ -29,7 +30,7 @@ def run_filter_extraction(args):
     assert(len(reference_contours) == 30)
     assert(len(ref_colors) == 30)
 
-    columns=['filename', 'R', 'G', 'B', 'BC_TOT']
+    columns = ['filename', 'R', 'G', 'B', 'BC_TOT']
     results = []
     for image_path in list_of_images:
         original_input_image = utils.resize(cv.imread(image_path))
@@ -38,7 +39,7 @@ def run_filter_extraction(args):
         input_image_grayscale = utils.convert_to_grayscale(input_image)
 
         input_low, input_high = utils.calibrate_threshold(
-            input_image_grayscale, use_ui=show_results)
+            input_image_grayscale, use_ui=show_ui_results)
 
         (input_thresh, input_threshold) = cv2.threshold(
             input_image_grayscale, input_low, input_high, cv2.THRESH_BINARY_INV)
@@ -47,9 +48,13 @@ def run_filter_extraction(args):
          target_colors) = utils.extract_all_points(
             input_image, input_threshold)
 
-        color_corrected_image = input_image.copy()  
+        color_corrected_image = input_image.copy()
         for row in color_corrected_image:
-            row[:] = colour.colour_correction(row[:], target_colors, ref_colors, 'Vandermonde')
+            row[:] = colour.colour_correction(
+                row[:], target_colors, ref_colors, 'Vandermonde')
+        if show_color_plot:
+            utils.plot([reference_image, input_image,
+                       color_corrected_image], ncols=3)
 
         # Extract filter
         file_name = image_path.split("/")[-1]
@@ -58,7 +63,8 @@ def run_filter_extraction(args):
             print(f"Could not extract filter for {file_name}")
             continue
         bgr_strings = [str(intensity) for intensity in filter_value]
-        entry = [file_name, bgr_strings[2], bgr_strings[1], bgr_strings[0], 'to_be_calculated']
+        entry = [file_name, bgr_strings[2], bgr_strings[1],
+                 bgr_strings[0], 'to_be_calculated']
         results.append(entry)
     # Write results to csv
     dataframe = pd.DataFrame(results, columns=columns)
