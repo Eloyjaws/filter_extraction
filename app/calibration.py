@@ -26,26 +26,25 @@ def run_calibration(args):
 
     (image, sorted_contours, colors) = utils.load_image_with_features(path_to_reference)
     assert(len(sorted_contours) == 30)
-    assert(len(colors) == 30)
+    assert(len(colors) == 30), "Could not extract all boxes from reference successfully"
     objpoints = utils.flatten(sorted_contours, expand=True)
     imgpoints = []
 
     no_of_valid_images = 0
     for image_path in list_of_images:
         (image, sorted_contours, colors) = utils.load_image_with_features(image_path)
-        if(sorted_contours.shape[0] != 30):
-            continue
+        assert(len(sorted_contours) == 30), f"Could not extract all boxes from {image_path} successfully"
         imgpoints.append(utils.flatten(sorted_contours))
         no_of_valid_images += 1
 
     imgpoints = np.array(imgpoints)
     objpoints = np.array([objpoints for i in range(no_of_valid_images)])
-
     grayscale_image = utils.convert_to_grayscale(image)
+
+    
 
     k = (objpoints - np.min(objpoints))/(np.max(objpoints) - np.min(objpoints))
     l = (imgpoints - np.min(imgpoints))/(np.max(imgpoints) - np.min(imgpoints))
-    # print(k[0], objpoints[0])
 
     ret, mtx, dist, rvecs, tvecs = cv2.calibrateCamera(
         k, l, grayscale_image.shape[::-1], None, None)

@@ -49,7 +49,7 @@ def run_filter_extraction(args):
          target_colors) = utils.extract_all_points(
             input_image, input_threshold)
 
-        box_colors.append(target_colors)
+        box_colors.append([np.array(list(reversed(bgrs))) for bgrs in target_colors])
 
         color_corrected_image = input_image.copy()
         for row in color_corrected_image:

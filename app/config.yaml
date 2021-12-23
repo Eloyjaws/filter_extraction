@@ -1,7 +1,7 @@
 reference_card: data/RC_RGB_v1.2.4.jpg
 
 input_images: data/input_images/v3
-calibration_images: data/input_images/combined
+calibration_images: data/input_images/v1
 camera_id: default
 logs: data/log.txt
 

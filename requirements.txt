@@ -5,3 +5,4 @@ matplotlib==3.3.3
 opencv_python==4.5.2.52
 PyYAML==6.0
 scikit_learn==1.0.1
+colour-science
