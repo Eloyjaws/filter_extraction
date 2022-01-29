@@ -367,7 +367,6 @@ def calculate_reprojection_error(objpoints, imgpoints, mtx, dist_coeff, rvecs, t
     return mean_error/len(objpoints)
 
 
-
 def write_results_to_csv(results):
     Path("results").mkdir(parents=True, exist_ok=True)
     timestamp = datetime.datetime.now().strftime("%a_%d_%b_%Y_%H:%M:%S")
@@ -378,56 +377,17 @@ def write_results_to_csv(results):
         writer = csv.DictWriter(f, fieldnames=fieldnames)
         writer.writeheader()
         writer.writerows(results)
-
-
-def extract_filter(corrected_image, original_image=[]):
-    grayscale_image = convert_to_grayscale(original_image if len(original_image) else corrected_image)
-    # dp: This parameter is the inverse ratio of the accumulator resolution 
-    # to the image resolution (see Yuen et al. for more details). 
-    # Essentially, the larger the dp gets, the smaller the accumulator array gets.
-    dp = 1
-    # minDist: Minimum distance between the center (x, y) coordinates of detected circles. 
-    # If the minDist is too small, multiple circles in the same neighborhood as the 
-    # original may be (falsely) detected. 
-    # If the minDist is too large, then some circles may not be detected at all.
-    minDist = 100
-    # param1: Gradient value used to handle edge detection in the Yuen et al. method.
-    param1 = 100
-    # param2: Accumulator threshold value for the cv2.HOUGH_GRADIENT method. 
-    # The smaller the threshold is, the more circles will be detected (including false circles). 
-    # The larger the threshold is, the more circles will potentially be returned.
-    param2 = 75
-    # minRadius: Minimum size of the radius (in pixels).
-    minRadius = 0
-    # maxRadius: Maximum size of the radius (in pixels).
-    maxRadius = 0
-
-    circles = cv2.HoughCircles(grayscale_image, cv2.HOUGH_GRADIENT,
-                            dp, minDist, param1=param1, param2=param2, minRadius=minRadius, maxRadius=maxRadius)
-
-    if circles is None:
-        circles = np.array([[]])
-    circles = np.uint16(np.around(circles))
-    # padding = 22 # Centered filter
-    padding = 30 # filter can be placed anywhere in circle
-    circles_detected = len(circles[0])
-    if(circles_detected > 1):
-        print("Error: More than one circle detected")
-        # for (x, y, r) in circles[0]:
-        #     cv2.circle(corrected_image, (x, y), r-padding, (0, 0, 255), 3)
-        # cv2.imshow("Detected Circles", corrected_image)
-        # cv2.waitKey(0)
-        return -1
-
-    if(circles_detected == 0):
-        print("Error: No filter detected")
-        return -1
     
-    for (x, y, r) in circles[0]:
-        # cv2.circle(corrected_image, (x, y), r-padding, (0, 0, 255), 3)
-        mask = np.zeros((corrected_image.shape[:2]), np.uint8)
-        cv2.circle(mask,(x,y),r-padding,(255,0,0), -1)
-        bgr = cv2.mean(corrected_image, mask=mask)
-        return(bgr[:3])
+
+def extract_filter(corrected_image, radius=42, show_circle=False):
+    x, y, r = 512, 384, radius
+    mask = np.zeros((corrected_image.shape[:2]), np.uint8)
+    cv2.circle(mask,(x,y),r,(255,0,0), -1)
+    bgr = cv2.mean(corrected_image, mask=mask)
     
-    cv2.imshow("Detected Circle", corrected_image)
+    if show_circle:
+        cv2.circle(corrected_image, (x, y), r, (0, 0, 255), 3)
+        cv2.imshow("Detected Circle", corrected_image)
+        cv2.waitKey(0)
+    return bgr[:3]
+    

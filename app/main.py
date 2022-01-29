@@ -46,15 +46,18 @@ if __name__ == "__main__":
                                    default=defaults.get('input_images', None), required=force_required)
     extraction_parser.add_argument("-c", "--camera", help="Camera ID - for loading camera calibration parameters",
                                    default=defaults.get('camera_id', None), required=force_required)
-
     extraction_parser.add_argument("-ui", "--use_ui_for_calibration", help="Use CV window to display threshold image",
                                    default=defaults.get('use_ui_for_calibration', False), required=force_required)
     extraction_parser.add_argument("-sift", "--use_sift", help="Use SIFT to fix perspective and skew",
                                    default=defaults.get('use_sift', True), required=force_required)
-    extraction_parser.add_argument("-show_sift_plot", "--show_sift_plot", help="Show results from applying SIFT",
+    extraction_parser.add_argument("-ssp", "--show_sift_plot", help="Show results from applying SIFT",
                                    default=defaults.get('show_sift_plot', False), required=force_required)
-    extraction_parser.add_argument("-color", "--show_color_correction_plot", help="Show results from applying Color Calibration",
-                                   default=defaults.get('show_color_correction_plot', True), required=force_required)
+    extraction_parser.add_argument("-sccp", "--show_color_correction_plot", help="Show results from applying Color Calibration",
+                                   default=defaults.get('show_color_correction_plot', False), required=force_required)
+    extraction_parser.add_argument("-acc", "--apply_color_correction", help="Apply Color Correction",
+                                   default=defaults.get('apply_color_correction', True), required=force_required)
+    extraction_parser.add_argument("-sec", "--show_extracted_circles", help="Draw circles around extracted filters and visualize results",
+                                   default=defaults.get('show_extracted_circles', False), required=force_required)
 
     args = vars(parser.parse_args())
     if args['mode'] == 'calibrate':

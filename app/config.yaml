@@ -9,5 +9,5 @@ use_ui_for_calibration: False
 use_sift: True
 show_sift_plot: False
 show_color_correction_plot: False
-apply_color_correction: False
+apply_color_correction: True
 show_extracted_circles: False
