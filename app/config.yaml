@@ -1,11 +1,13 @@
 reference_card: data/RC_RGB_v1.2.4.jpg
 
-input_images: data/input_images/v3
-calibration_images: data/input_images/v1
+input_images: data/input_images/v4
+calibration_images: data/input_images/v4
 camera_id: default
 logs: data/log.txt
+use_ui_for_calibration: False
 
 use_sift: True
-use_ui_for_calibration: False
 show_sift_plot: False
 show_color_correction_plot: False
+apply_color_correction: False
+show_extracted_circles: False
