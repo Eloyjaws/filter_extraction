@@ -57,9 +57,9 @@ python main.py extract --reference data/RC_RGB_v1.2.4.jpg --inputs data/input_im
 
 **Results**
 
-RGB values of extracted filter are stored in [results.csv](app/results.csv)
+RGB values of extracted filter are stored in [results.csv](app/output/results.csv)
 
-RGB values of extracted boxes 0 - 29 are stored in [boxes.csv](app/boxes.csv)
+RGB values of extracted boxes 0 - 29 are stored in [boxes.csv](app/output/boxes.csv)
 
 ### Camera Calibration
 ```
