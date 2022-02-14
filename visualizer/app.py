@@ -1,29 +1,29 @@
 import streamlit as st
 from PIL import Image
-import utils
 import cv2
 import numpy as np
 import colour
 
+import utils
+
 
 def convert_from_cv2_to_image(img: np.ndarray) -> Image:
     return Image.fromarray(cv2.cvtColor(img, cv2.COLOR_BGR2RGB))
-    # return Image.fromarray(img)
 
 
 def convert_from_image_to_cv2(img: Image) -> np.ndarray:
     return cv2.cvtColor(np.array(img), cv2.COLOR_RGB2BGR)
-    # return np.asarray(img)
 
 
 def main():
     st.sidebar.title("Filter Extraction Visualizer")
     st.subheader("Inspect intermediate images in the extraction pipeline")
-    st.sidebar.image("../app/data/RC_RGB_v1.2.4.jpg", use_column_width=True)
+    st.sidebar.image("app/data/RC_RGB_v1.2.4.jpg", use_column_width=True)
 
     st.sidebar.subheader("Options")
     use_sift = st.sidebar.checkbox("Apply Sift", True)
-    apply_color_correction = st.sidebar.checkbox("Apply Color Correction", True)
+    apply_color_correction = st.sidebar.checkbox(
+        "Apply Color Correction", True)
 
     st.sidebar.subheader("Display")
     show_original_image = st.sidebar.checkbox("Original Image", True)
@@ -34,11 +34,12 @@ def main():
         show_image_after_cc = st.sidebar.checkbox(
             "Color Corrected Image", False
         )
-    show_extracted_circles = st.sidebar.checkbox("Extracted Filter Area", False)
+    show_extracted_circles = st.sidebar.checkbox(
+        "Extracted Filter Area", False)
 
     # Load up the reference image, the positions and colors of all 30 boxes
     (reference_image, reference_contours, ref_colors) = utils.load_image_with_features(
-        "../app/data/RC_RGB_v1.2.4.jpg"
+        "app/data/RC_RGB_v1.2.4.jpg"
     )
     assert len(reference_contours) == 30
     assert len(ref_colors) == 30
@@ -62,7 +63,8 @@ def main():
 
         if show_image_after_sift:
             st.caption("Image After SIFT")
-            st.image(convert_from_cv2_to_image(input_image), use_column_width=True)
+            st.image(convert_from_cv2_to_image(
+                input_image), use_column_width=True)
 
         input_image_grayscale = utils.convert_to_grayscale(input_image)
 
@@ -73,7 +75,8 @@ def main():
 
         if show_bw_image:
             st.caption("B/W Image")
-            st.image(convert_from_cv2_to_image(input_threshold), use_column_width=True)
+            st.image(convert_from_cv2_to_image(
+                input_threshold), use_column_width=True)
 
         # Load up image, extract the positions and colors of all 30 boxes
         (target_image, target_contours, target_colors) = utils.extract_all_points(
@@ -81,9 +84,11 @@ def main():
         )
 
         if show_extracted_boxes:
-            target_image_with_boxes = utils.draw_contours(target_image.copy(), target_contours)
+            target_image_with_boxes = utils.draw_contours(
+                target_image.copy(), target_contours)
             st.caption("Extracted Boxes")
-            st.image(convert_from_cv2_to_image(target_image_with_boxes), use_column_width=True)
+            st.image(convert_from_cv2_to_image(
+                target_image_with_boxes), use_column_width=True)
 
         if len(reference_contours) != 30 or len(ref_colors) != 30:
             st.error(f"Could not extract all 30 boxes")
