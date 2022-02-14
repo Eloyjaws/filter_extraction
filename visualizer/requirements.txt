@@ -5,3 +5,4 @@ numpy==1.19.5
 Pillow==9.0.1
 scikit_learn==1.0.2
 opencv-python-headless==4.5.4.60
+colour-science
