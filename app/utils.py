@@ -286,7 +286,7 @@ def extract_all_points(original, after_threshold):
     base = 80
     xbase = 80
     ybase = 80
-    
+
     for contour in contours:
         contour_len = cv2.arcLength(contour, True)
         contour_area = cv2.contourArea(contour)
@@ -302,7 +302,6 @@ def extract_all_points(original, after_threshold):
 
     sorted_contours = sorted(squares, key=lambda b: (
         xbase * math.floor(b[0][0] / xbase), ybase * math.floor(b[0][1] / ybase)), reverse=False)
-
 
     colors = []
     for idx, contour in enumerate(sorted_contours):
@@ -325,6 +324,7 @@ def get_color_calibration_model(reference, input):
     pls.fit(input, reference)
     print("Color calibration model score: ", pls.score(reference, input))
     return pls
+
 
 def get_filenames_from_folder(path_to_images):
     files = []
@@ -377,17 +377,16 @@ def write_results_to_csv(results):
         writer = csv.DictWriter(f, fieldnames=fieldnames)
         writer.writeheader()
         writer.writerows(results)
-    
+
 
 def extract_filter(corrected_image, radius=42, show_circle=False):
     x, y, r = 512, 384, radius
     mask = np.zeros((corrected_image.shape[:2]), np.uint8)
-    cv2.circle(mask,(x,y),r,(255,0,0), -1)
+    cv2.circle(mask, (x, y), r, (255, 0, 0), -1)
     bgr = cv2.mean(corrected_image, mask=mask)
-    
+
     if show_circle:
         cv2.circle(corrected_image, (x, y), r, (0, 0, 255), 3)
         cv2.imshow("Detected Circle", corrected_image)
         cv2.waitKey(0)
     return bgr[:3]
-    
