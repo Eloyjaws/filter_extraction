@@ -44,44 +44,45 @@ def run_filter_extraction(args):
     
 
     for image_path in list_of_images:
-        file_name = image_path.split("/")[-1]
-        print(file_name)
-        original_input_image = utils.resize(cv2.imread(image_path))
-        input_image = utils.run_sift(reference_image, original_input_image, SHOW_PLOT=show_sift_plot) if use_sift else original_input_image
-        input_image_grayscale = utils.convert_to_grayscale(input_image)
+        try:
+            file_name = image_path.split("/")[-1]
+            print(file_name)
+            original_input_image = utils.resize(cv2.imread(image_path))
+            input_image = utils.run_sift(reference_image, original_input_image, SHOW_PLOT=show_sift_plot) if use_sift else original_input_image
+            input_image_grayscale = utils.convert_to_grayscale(input_image)
 
-        # if use_ui for calibration is false: low = 127, high = 255
-        input_low, input_high = utils.calibrate_threshold(input_image_grayscale, use_ui=show_ui_results)
+            # if use_ui for calibration is false: low = 127, high = 255
+            input_low, input_high = utils.calibrate_threshold(input_image_grayscale, use_ui=show_ui_results)
 
-        # Convert grayscale image to B/W
-        (input_thresh, input_threshold) = cv2.threshold(input_image_grayscale, input_low, input_high, cv2.THRESH_BINARY_INV)
+            # Convert grayscale image to B/W
+            (input_thresh, input_threshold) = cv2.threshold(input_image_grayscale, input_low, input_high, cv2.THRESH_BINARY_INV)
 
-        # Load up image, extract the positions and colors of all 30 boxes
-        (target_image, target_contours, target_colors) = utils.extract_all_points(input_image, input_threshold)
-        if(len(reference_contours) != 30 or len(ref_colors) != 30):
-            print(f"SKIPPING {file_name}: Could not extract all 30 boxes")
-            continue
+            # Load up image, extract the positions and colors of all 30 boxes
+            (target_image, target_contours, target_colors) = utils.extract_all_points(input_image, input_threshold)
 
-        # Store RGB values of extracted boxes
-        rgbs = [np.array(list(reversed(bgrs))) for bgrs in target_colors]
-        box_colors[file_name] = rgbs
+            # Store RGB values of extracted boxes
+            rgbs = [np.array(list(reversed(bgrs))) for bgrs in target_colors]
+            box_colors[file_name] = rgbs
+            
+            # Apply color correction
+            color_corrected_image = input_image.copy()
+            if apply_color_correction:
+                for row in color_corrected_image:
+                    row[:] = colour.colour_correction(row[:], target_colors, ref_colors, 'Vandermonde')
+
+            if show_color_correction_plot:
+                utils.plot([reference_image, input_image, color_corrected_image], ncols=3)
+
+            # Extract filter
+            filter_value = utils.extract_filter(color_corrected_image, radius=24, show_circle=show_extracted_circles)
         
-        # Apply color correction
-        color_corrected_image = input_image.copy()
-        if apply_color_correction:
-            for row in color_corrected_image:
-                row[:] = colour.colour_correction(row[:], target_colors, ref_colors, 'Vandermonde')
-
-        if show_color_correction_plot:
-            utils.plot([reference_image, input_image, color_corrected_image], ncols=3)
-
-        # Extract filter
-        filter_value = utils.extract_filter(color_corrected_image, show_circle=show_extracted_circles)
-    
-        # Append R G and B values to result array
-        bgr_strings = [str(intensity) for intensity in filter_value]
-        entry = [file_name, bgr_strings[2], bgr_strings[1], bgr_strings[0], 'to_be_calculated']
-        results.append(entry)
+            # Append R G and B values to result array
+            bgr_strings = [str(intensity) for intensity in filter_value]
+            entry = [file_name, bgr_strings[2], bgr_strings[1], bgr_strings[0], 'to_be_calculated']
+            results.append(entry)
+        except Exception as e:
+            print(f"SKIPPING {file_name}: Could not extract all 30 boxes", e)
+            continue
 
 
     # Write extracted filter values to csv file
