@@ -137,8 +137,8 @@ def run_sift(img1, img2, SHOW_PLOT=False):
         if m.distance < 0.9 * n.distance:
             good.append(m)
             
-    print(f"No of matches {len(matches)}")
-    print(f"No of good matches {len(good)}")
+    # print(f"No of matches {len(matches)}")
+    # print(f"No of good matches {len(good)}")
     MIN_MATCH_COUNT = 9
     # print(len(good))
     # MIN_MATCH_COUNT = 10
@@ -151,7 +151,7 @@ def run_sift(img1, img2, SHOW_PLOT=False):
         # print("SRC: \n", src_pts)
         # print("DST: \n",dst_pts)
         M, mask = cv2.findHomography(dst_pts, src_pts, cv2.RANSAC, 5.0)
-        print(M, "\n", cv2.determinant(M))
+        # print(M, "\n", cv2.determinant(M))
     else:
         print("Not enough matches are found - %d/%d" %
               (len(good), MIN_MATCH_COUNT))
