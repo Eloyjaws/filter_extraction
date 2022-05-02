@@ -121,7 +121,7 @@ def run_sift(img1, img2, SHOW_PLOT=False):
 
     # ratio test as per Lowe's paper
     for i, (m, n) in enumerate(matches):
-        if m.distance < 0.7*n.distance:
+        if m.distance < 0.9 * n.distance:
             matchesMask[i] = [1, 0]
 
     draw_params = dict(matchColor=(0, 255, 0),
@@ -134,8 +134,11 @@ def run_sift(img1, img2, SHOW_PLOT=False):
     # store all the good matches as per Lowe's ratio test.
     good = []
     for m, n in matches:
-        if m.distance < 0.7 * n.distance:
+        if m.distance < 0.9 * n.distance:
             good.append(m)
+            
+    print(f"No of matches {len(matches)}")
+    print(f"No of good matches {len(good)}")
     MIN_MATCH_COUNT = 9
     # print(len(good))
     # MIN_MATCH_COUNT = 10
@@ -148,7 +151,7 @@ def run_sift(img1, img2, SHOW_PLOT=False):
         # print("SRC: \n", src_pts)
         # print("DST: \n",dst_pts)
         M, mask = cv2.findHomography(dst_pts, src_pts, cv2.RANSAC, 5.0)
-        # print(M, "\n", cv2.determinant(M))
+        print(M, "\n", cv2.determinant(M))
     else:
         print("Not enough matches are found - %d/%d" %
               (len(good), MIN_MATCH_COUNT))
