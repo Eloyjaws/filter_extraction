@@ -3,6 +3,7 @@ import argparse
 
 from calibration import run_calibration
 from filter_extraction import run_filter_extraction
+from train import run_model_training
 
 PROGRAM_NAME = "SIS Pipeline"
 PROGRAM_VERSION = "0.0.1"
@@ -30,6 +31,8 @@ if __name__ == "__main__":
         'calibrate', help='Run camera calibration routine')
     extraction_parser = subparsers.add_parser(
         'extract', help='Run filter extraction routine')
+    train_parser = subparsers.add_parser(
+        'train', help='Run model training routine')
 
     calibration_parser.add_argument("-c", "--camera_id", help="Camera ID - to identify saved camera parameters",
                                     default="default")
@@ -58,9 +61,24 @@ if __name__ == "__main__":
                                    default=defaults.get('apply_color_correction', True), required=force_required)
     extraction_parser.add_argument("-sec", "--show_extracted_circles", help="Draw circles around extracted filters and visualize results",
                                    default=defaults.get('show_extracted_circles', False), required=force_required)
+    
+
+    train_parser.add_argument("-d", "--dataset", help="Path to train dataset",
+                                   default=defaults.get('path_to_train_dataset', False), required=force_required)
+    train_parser.add_argument("-m", "--metadata", help="Path to metadata",
+                                default=defaults.get('path_to_metadata', False), required=force_required)
+    train_parser.add_argument("-n", "--modelname", help="Model Name",
+                                default=defaults.get('model_name', False), required=force_required)
+    train_parser.add_argument("-p", "--use_polynomial_model", help="Use Polynomial Model",
+                                default=defaults.get('use_polynomial_model', True), required=force_required)
+
+    
 
     args = vars(parser.parse_args())
     if args['mode'] == 'calibrate':
         run_calibration(args)
-    else:
+    elif args['mode'] == 'extract':
         run_filter_extraction(args)
+    elif args['mode'] == 'train':
+        run_model_training(args)
+        

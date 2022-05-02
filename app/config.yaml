@@ -1,13 +1,18 @@
 reference_card: data/RC_RGB_v1.2.4.jpg
 
-input_images: data/input_images/v4
+input_images: data/input_images/fail
 calibration_images: data/input_images/v4
 camera_id: default
 logs: data/log.txt
 use_ui_for_calibration: False
 
 use_sift: True
-show_sift_plot: False
+show_sift_plot: True
 show_color_correction_plot: False
-apply_color_correction: True
 show_extracted_circles: False
+apply_color_correction: False
+
+path_to_train_dataset: output/results_after_cc.csv
+path_to_metadata: output/metadata.csv
+model_name: bcp0.model
+use_polynomial_model: False

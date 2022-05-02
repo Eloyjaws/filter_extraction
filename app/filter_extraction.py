@@ -8,6 +8,7 @@ import matplotlib.pyplot as plt
 
 import utils
 
+# TODO: Add error handling for extraction process. eg. when SIFT fails 
 
 def run_filter_extraction(args):
     print("\n\nRunning filter extraction\n\n")
@@ -44,6 +45,7 @@ def run_filter_extraction(args):
 
     for image_path in list_of_images:
         file_name = image_path.split("/")[-1]
+        print(file_name)
         original_input_image = utils.resize(cv2.imread(image_path))
         input_image = utils.run_sift(reference_image, original_input_image, SHOW_PLOT=show_sift_plot) if use_sift else original_input_image
         input_image_grayscale = utils.convert_to_grayscale(input_image)

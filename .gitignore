@@ -1,5 +1,14 @@
+Notes.md
+.vscode
+app/models
+
+
 *.pyc
 .DS_Store
+
+**.jpg
+**.jpeg
+**.png
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
