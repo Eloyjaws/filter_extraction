@@ -64,11 +64,29 @@ def run_filter_extraction(args):
             rgbs = [np.array(list(reversed(bgrs))) for bgrs in target_colors]
             box_colors[file_name] = rgbs
             
-            # Apply color correction
-            color_corrected_image = input_image.copy()
+            """
+            Apply color correction
+            This technique ensures that the color correction process does not leave red artifacts
+            https://stackoverflow.com/questions/62993366/color-calibration-with-color-checker-using-using-root-polynomial-regression-not
+            """
+            # Create a float copy
+            color_corrected_image = input_image.astype(np.float)
+            # Normalise the image to have pixel values from 0 to 1
+            color_corrected_image = (color_corrected_image - np.min(color_corrected_image))/np.ptp(color_corrected_image)
+            # Decode the image with sRGB EOTF
+            color_corrected_image = colour.models.eotf_sRGB(color_corrected_image)
             if apply_color_correction:
                 for row in color_corrected_image:
-                    row[:] = colour.colour_correction(row[:], target_colors, ref_colors, 'Vandermonde')
+                    # row[:] = colour.colour_correction(row[:], target_colors, ref_colors, 'Cheung 2004')
+                    row[:] = colour.colour_correction(row[:], target_colors, ref_colors, 'Finlayson 2015')
+                    # row[:] = colour.colour_correction(row[:], target_colors, ref_colors, 'Vandermonde')
+            
+            # Encode image back to sRGB
+            color_corrected_image = colour.models.eotf_inverse_sRGB(color_corrected_image)  
+            # Denormalize image to fit 255 pixel values (also clip to ensure values fall between 0 - 255)
+            color_corrected_image = np.clip((color_corrected_image * 255), 0, 255)
+            # Convert floats back to integers
+            color_corrected_image = color_corrected_image.astype(np.uint8)
 
             if show_color_correction_plot:
                 utils.plot([reference_image, input_image, color_corrected_image], ncols=3)
@@ -81,7 +99,7 @@ def run_filter_extraction(args):
             entry = [file_name, bgr_strings[2], bgr_strings[1], bgr_strings[0], 'to_be_calculated']
             results.append(entry)
         except Exception as e:
-            print(f"SKIPPING {file_name}: Could not extract all 30 boxes", e)
+            print(f"SKIPPING {file_name}:", e)
             continue
 
 
