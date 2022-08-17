@@ -98,7 +98,7 @@ def plot(images, nrows=1, ncols=2, figsize=(16, 6), titles=None):
     plt.show()
 
 
-def run_sift(img1, img2, SHOW_PLOT=False):
+def run_sift(img1, img2, SHOW_PLOT=False, LOWE_RATIO=0.9):
     sift = cv.SIFT_create()
     kp1, des1 = sift.detectAndCompute(img1, None)
     res1 = cv.drawKeypoints(
@@ -121,7 +121,7 @@ def run_sift(img1, img2, SHOW_PLOT=False):
 
     # ratio test as per Lowe's paper
     for i, (m, n) in enumerate(matches):
-        if m.distance < 0.9 * n.distance:
+        if m.distance < LOWE_RATIO * n.distance:
             matchesMask[i] = [1, 0]
 
     draw_params = dict(matchColor=(0, 255, 0),
@@ -134,7 +134,7 @@ def run_sift(img1, img2, SHOW_PLOT=False):
     # store all the good matches as per Lowe's ratio test.
     good = []
     for m, n in matches:
-        if m.distance < 0.9 * n.distance:
+        if m.distance < LOWE_RATIO * n.distance:
             good.append(m)
             
     # print(f"No of matches {len(matches)}")
@@ -308,17 +308,18 @@ def extract_all_points(original, after_threshold):
 
     colors = []
     for idx, contour in enumerate(sorted_contours):
+        x, y, w, h = cv2.boundingRect(np.array([contour]))
+        padding = 6
+        ROI = original[y+padding:y +
+                       h-padding, x+padding:x+w-padding]
+        colors.append(np.average(ROI, axis=(0, 1)))
+
         # cv2.putText(image, f"{idx}", contour[0], font, 0.9, (0, 0, 0), 3)
         # cv2.circle(image, contour[0], 8, (0, 0, 255), -1)
         # cv2.circle(image, contour[1], 8, (0, 255, 0), -1)
         # cv2.circle(image, contour[2], 8, (255, 0, 0), -1)
         # cv2.circle(image, contour[3], 8, (255, 0, 255), -1)
-        x, y, w, h = cv2.boundingRect(np.array([contour]))
 
-        padding = 6
-        ROI = original[y+padding:y +
-                       h-padding, x+padding:x+w-padding]
-        colors.append(np.average(ROI, axis=(0, 1)))
     return image, np.array(sorted_contours), colors
 
 

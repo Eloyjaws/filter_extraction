@@ -10,6 +10,7 @@ import utils
 
 # TODO: Add error handling for extraction process. eg. when SIFT fails 
 
+
 def run_filter_extraction(args):
     print("\n\nRunning filter extraction\n\n")
 
@@ -19,7 +20,7 @@ def run_filter_extraction(args):
 
     use_sift = args.get('use_sift')
     show_sift_plot = args.get('show_sift_plot')
-    show_ui_results = args.get('use_ui_for_calibration')
+    use_ui_for_calibration = args.get('use_ui_for_calibration')
     show_color_correction_plot = args.get('show_color_correction_plot')
     apply_color_correction = args.get('apply_color_correction')
     show_extracted_circles = args.get('show_extracted_circles')
@@ -42,23 +43,37 @@ def run_filter_extraction(args):
     columns = ['filename', 'R', 'G', 'B', 'BC_TOT']
     results = []
     
+    def extract_artifacts(original_input_image, LOWE_RATIO = 0.85):
+
+        if(LOWE_RATIO > 1):
+            raise Exception("Failed to extract artfacts")
+
+        input_image = utils.run_sift(reference_image, original_input_image, SHOW_PLOT=show_sift_plot, LOWE_RATIO=LOWE_RATIO) if use_sift else original_input_image
+        input_image_grayscale = utils.convert_to_grayscale(input_image)
+
+        # if use_ui for calibration is false: low = 127, high = 255
+        input_low, input_high = utils.calibrate_threshold(input_image_grayscale, use_ui=use_ui_for_calibration)
+
+        # Convert grayscale image to B/W
+        (input_thresh, input_threshold) = cv2.threshold(input_image_grayscale, input_low, input_high, cv2.THRESH_BINARY_INV)
+
+        # Load up image, extract the positions and colors of all 30 boxes
+        (marked_image, target_contours, target_colors) = utils.extract_all_points(input_image, input_threshold)
+        
+        if((len(target_contours) == 30) and (len(target_colors) == 30)):
+            return (input_image, marked_image, target_contours, target_colors)
+        
+        print("Increasing lowe ratio by 0.05")
+        return extract_artifacts(original_input_image, LOWE_RATIO=LOWE_RATIO+0.05)
+
 
     for image_path in list_of_images:
         try:
             file_name = image_path.split("/")[-1]
             print(file_name)
             original_input_image = utils.resize(cv2.imread(image_path))
-            input_image = utils.run_sift(reference_image, original_input_image, SHOW_PLOT=show_sift_plot) if use_sift else original_input_image
-            input_image_grayscale = utils.convert_to_grayscale(input_image)
 
-            # if use_ui for calibration is false: low = 127, high = 255
-            input_low, input_high = utils.calibrate_threshold(input_image_grayscale, use_ui=show_ui_results)
-
-            # Convert grayscale image to B/W
-            (input_thresh, input_threshold) = cv2.threshold(input_image_grayscale, input_low, input_high, cv2.THRESH_BINARY_INV)
-
-            # Load up image, extract the positions and colors of all 30 boxes
-            (target_image, target_contours, target_colors) = utils.extract_all_points(input_image, input_threshold)
+            (input_image, marked_image, contours, target_colors) = extract_artifacts(original_input_image)
 
             # Store RGB values of extracted boxes
             rgbs = [np.array(list(reversed(bgrs))) for bgrs in target_colors]
