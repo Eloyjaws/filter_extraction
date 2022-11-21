@@ -273,7 +273,7 @@ def extract_fast_features(reference, target, reference_card, input_image, USE_CO
         plot([referenceWithCircles, targetWithCircles])
 
 
-def extract_all_points(original, after_threshold):
+def extract_all_points(original, after_threshold, add_bw_boxes=True):
 
     image = original.copy()
     contours = cv2.findContours(
@@ -318,7 +318,24 @@ def extract_all_points(original, after_threshold):
         # cv2.circle(image, contour[0], 8, (0, 0, 255), -1)
         # cv2.circle(image, contour[1], 8, (0, 255, 0), -1)
         # cv2.circle(image, contour[2], 8, (255, 0, 0), -1)
-        # cv2.circle(image, contour[3], 8, (255, 0, 255), -1)
+    
+    if(add_bw_boxes):
+        center_x, center_y, r = 512, 384, 16
+        black_dist_x, black_dist_y = -64, -64
+        white_dist_x, white_dist_y = 0, -120
+
+        black_x, black_y = center_x + black_dist_x, center_y + black_dist_y
+        white_x, white_y = center_x + white_dist_x, center_y + white_dist_y
+
+        black_mask = np.zeros((original.shape[:2]), np.uint8)
+        white_mask = np.zeros((original.shape[:2]), np.uint8)
+        cv2.circle(black_mask, (black_x, black_y), r, (255, 0, 0), -1)
+        cv2.circle(white_mask, (white_x, white_y), r, (255, 0, 0), -1)
+        black_bgr = cv2.mean(original, mask=black_mask)[:3]
+        white_bgr = cv2.mean(original, mask=white_mask)[:3]
+        
+        colors.append(np.array(black_bgr))
+        colors.append(np.array(white_bgr))
 
     return image, np.array(sorted_contours), colors
 

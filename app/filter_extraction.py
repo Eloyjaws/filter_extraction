@@ -1,14 +1,10 @@
-import os
 import cv2
 import colour
 import numpy as np
 import pandas as pd
 from pathlib import Path
-import matplotlib.pyplot as plt
 
 import utils
-
-# TODO: Add error handling for extraction process. eg. when SIFT fails 
 
 
 def run_filter_extraction(args):
@@ -28,14 +24,14 @@ def run_filter_extraction(args):
     list_of_images = utils.get_filenames_from_folder(path_to_inputs)
     box_colors = {}
 
-    # Load up the reference image, the positions and colors of all 30 boxes
+    # Load up the reference image, the positions and colors of all 30 boxes and 32 colors
     (
         reference_image,
         reference_contours,
         ref_colors
     ) = utils.load_image_with_features(path_to_reference)
     assert(len(reference_contours) == 30)
-    assert(len(ref_colors) == 30)
+    assert(len(ref_colors) == 32)
 
     box_colors['reference'] =  ref_colors
 
@@ -51,16 +47,17 @@ def run_filter_extraction(args):
         input_image = utils.run_sift(reference_image, original_input_image, SHOW_PLOT=show_sift_plot, LOWE_RATIO=LOWE_RATIO) if use_sift else original_input_image
         input_image_grayscale = utils.convert_to_grayscale(input_image)
 
-        # if use_ui for calibration is false: low = 127, high = 255
+        # Spins up UI to allow experimentation with different low/high values if use_ui = True
+        # if use_ui for calibration = = False: will use default values low = 127, high = 255
         input_low, input_high = utils.calibrate_threshold(input_image_grayscale, use_ui=use_ui_for_calibration)
 
         # Convert grayscale image to B/W
         (input_thresh, input_threshold) = cv2.threshold(input_image_grayscale, input_low, input_high, cv2.THRESH_BINARY_INV)
 
-        # Load up image, extract the positions and colors of all 30 boxes
+        # Load up image, extract the positions and colors of all 30 boxes and 32 colors
         (marked_image, target_contours, target_colors) = utils.extract_all_points(input_image, input_threshold)
         
-        if((len(target_contours) == 30) and (len(target_colors) == 30)):
+        if((len(target_contours) == 30) and (len(target_colors) == 32)):
             return (input_image, marked_image, target_contours, target_colors)
         
         print("Increasing lowe ratio by 0.05")
@@ -125,7 +122,7 @@ def run_filter_extraction(args):
     print(f"Results written to: output/results.csv")
 
     # Write extracted box colors to csv file
-    column_names = ['filename'] + [str(i) for i in np.arange(30)]
+    column_names = ['filename'] + [str(i) for i in np.arange(32)]
     dataframe_boxes = pd.DataFrame(box_colors).T.reset_index().set_axis(column_names,1,inplace=False)
     dataframe_boxes.to_csv("output/boxes.csv", index=False)
     print(f"Box colors written to: output/boxes.csv")
